@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  /* Mapping original utility names to the exact hex values of the new design tokens */
+  --color-nanohana: #A88F5A;     /* Muted Gold - Primary brand, links, action buttons, active states */
+  --color-forest: #0F0F10;       /* Caviar Black - Deep base, nav bg, dark fills, hero bg */
+  --color-phewa: #A88F5A;        /* Muted Gold - Primary brand accents/indicators */
+  --color-sage: #6B6B70;         /* Warm Slate - Muted text and delicate ornaments on dark fills */
+  --color-stone: #6B6B70;        /* Warm Slate - Muted UI border levels, placeholders, and secondary text */
+  --color-cream: #F4F1EB;        /* Textured Cream - Main background of cards and outer canvas container */
+  --color-earth: #0F0F10;        /* Caviar Black - Deep crisp body/heading text for maximum contrast with Cream */
+
+  /* Explicitly defining the new design tokens directly so they are fully available */
+  --color-caviar-black: #0F0F10;
+  --color-muted-gold: #A88F5A;
+  --color-warm-slate: #6B6B70;
+  --color-textured-cream: #F4F1EB;
+  
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-earth);
+    font-family: var(--font-sans), sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Josefin Sans Light, tracked wide — geometric, Zen display heading rules */
+  h1, h2, h3, h4, h5, h6, .font-serif {
+    font-family: var(--font-serif), sans-serif !important;
+    font-weight: 300 !important;
+    letter-spacing: 0.07em !important;
+  }
+}
+
+/* Custom styles for hidden scrollbars or animations */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

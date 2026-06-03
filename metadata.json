@@ -1,0 +1,6 @@
+{
+  "name": "Nanohana Lodge",
+  "description": "The official website of Nanohana Lodge, a family-run and eco-conscious guesthouse in Pokhara, Nepal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

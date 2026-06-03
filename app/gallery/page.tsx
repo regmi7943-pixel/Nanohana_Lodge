@@ -1,0 +1,319 @@
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  ExternalLink,
+  Leaf
+} from 'lucide-react';
+
+export default function GalleryPage() {
+  const [activeTab, setActiveTab] = useState('All');
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+
+  const tabs = ['All', 'Rooms', 'Garden & Terrace', 'Views', 'Pokhara'];
+
+  const photos = [
+    {
+      id: 1,
+      category: 'Views',
+      image: 'https://picsum.photos/seed/annapurna/1200/800',
+      title: 'Annapurna range from rooftop',
+      desc: 'The sweeping, unobstructed panorama visible from our communal deck at 6:15 AM.'
+    },
+    {
+      id: 2,
+      category: 'Rooms',
+      image: 'https://picsum.photos/seed/nanohanadeluxe/1200/800',
+      title: 'Deluxe Room interior & terrace',
+      desc: 'King bed setup, clean polished marble floors, and sliding glass frame facing the snow caps.'
+    },
+    {
+      id: 3,
+      category: 'Rooms',
+      image: 'https://picsum.photos/seed/nanohanastandard/1200/800',
+      title: 'Standard Double Room',
+      desc: 'Modest, immaculate fan-cooled layout with an attached private restroom.'
+    },
+    {
+      id: 4,
+      category: 'Garden & Terrace',
+      image: 'https://picsum.photos/seed/nanohanagarden/1200/800',
+      title: 'Terrace garden with blooming flora',
+      desc: 'Lovingly arranged hibiscus, canolas, and trailing organic climbers spanning all storeys.'
+    },
+    {
+      id: 5,
+      category: 'Garden & Terrace',
+      image: 'https://picsum.photos/seed/vegetation/1200/800',
+      title: 'Communal flower balcony chairs',
+      desc: 'Our second-storey shared balcony overlooking the quiet pedestrian lanes.'
+    },
+    {
+      id: 6,
+      category: 'Rooms',
+      image: 'https://picsum.photos/seed/teafresh/1200/800',
+      title: 'Private attached restroom & hot shower',
+      desc: 'Immaculately clean, featuring rainfall showerheads with exceptional water pressure.'
+    },
+    {
+      id: 7,
+      category: 'Views',
+      image: 'https://picsum.photos/seed/sunrisepeak/1200/800',
+      title: 'Rooftop golden sunrise over Pokhara',
+      desc: 'Waking up to misty valleys and golden Annapurna peaks greets you in Nepal.'
+    },
+    {
+      id: 8,
+      category: 'Pokhara',
+      image: 'https://picsum.photos/seed/phewautc/1200/800',
+      title: 'Phewa Lake reflection perspective',
+      desc: 'The iconic peaceful lake just a 300-metre strolling pathway from our entrance.'
+    },
+    {
+      id: 9,
+      category: 'Pokhara',
+      image: 'https://picsum.photos/seed/organicgardens/1200/800',
+      title: 'Lodge building exterior facade',
+      desc: 'A cohesive three-storey structure wrapped inside gardens on Lakeside Street 4.'
+    }
+  ];
+
+  const filteredPhotos = photos.filter((photo) => {
+    if (activeTab === 'All') return true;
+    return photo.category === activeTab;
+  });
+
+  const openLightbox = (photoId: number) => {
+    const origIndex = photos.findIndex((p) => p.id === photoId);
+    setSelectedPhotoIndex(origIndex);
+  };
+
+  const handleNextMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (selectedPhotoIndex === null) return;
+    setSelectedPhotoIndex((prev) => (prev! + 1) % photos.length);
+  };
+
+  const handlePrevMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (selectedPhotoIndex === null) return;
+    setSelectedPhotoIndex((prev) => (prev! - 1 + photos.length) % photos.length);
+  };
+
+  return (
+    <div id="gallery-page" className="w-full">
+      {/* SUB-HERO SECTION WITH 2X2 MINI MOSAIC AND NO OVERLAY TEXT IN IMAGE WAY */}
+      <section id="gallery-mosaic" className="relative w-full h-[60vh] min-h-[420px] bg-forest flex items-center justify-center">
+        {/* Real Mosaic block background styling */}
+        <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-4 h-full w-full opacity-65">
+          <div className="relative h-full w-full">
+            <Image
+              src="https://picsum.photos/seed/annapurna/500/500"
+              alt="Annapurna peaks backdrop"
+              fill
+              className="object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="relative h-full w-full">
+            <Image
+              src="https://picsum.photos/seed/nanohanagarden/500/500"
+              alt="Rooftop blooming garden flowers"
+              fill
+              className="object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="relative h-full w-full">
+            <Image
+              src="https://picsum.photos/seed/nanohanastandard/500/500"
+              alt="Lakeside Pokhara tidy bed"
+              fill
+              className="object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="relative h-full w-full">
+            <Image
+              src="https://picsum.photos/seed/sunrisepeak/500/500"
+              alt="Sunset panoramic valleys"
+              fill
+              className="object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="absolute inset-0 bg-forest/45 mix-blend-multiply" />
+        </div>
+
+        {/* Content Details (Sits neatly with proper overlay contrast) */}
+        <div className="relative z-10 text-center px-5 text-cream max-w-[800px] pt-16">
+          <span className="text-xs font-mono uppercase tracking-[0.2em] text-nanohana block mb-2 font-bold animate-pulse">
+            Photo Gallery
+          </span>
+          <h1 className="font-serif text-4xl sm:text-5xl font-medium tracking-tight mb-4">
+            See the lodge for yourself.
+          </h1>
+          <p className="text-cream/90 text-sm max-w-[500px] mx-auto leading-relaxed">
+            Beautiful flower gardens, clean polished bathrooms, fresh linens, and the epic snowy Himalayas towering directly above your morning coffee cup.
+          </p>
+        </div>
+      </section>
+
+      {/* FILTERABLE TABS ROW */}
+      <section id="gallery-tabs-section" className="bg-cream py-6 border-b border-earth/10">
+        <div className="max-w-[1240px] mx-auto px-5 md:px-10 lg:px-20 flex items-center justify-center sm:justify-start gap-2 overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2 rounded-full font-mono text-[11px] tracking-wider uppercase font-semibold transition-all ${
+                activeTab === tab
+                  ? 'bg-phewa text-cream shadow-sm'
+                  : 'text-earth/70 hover:text-earth hover:bg-earth/5'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* MASONRY-STYLE PHOTO GRID SECTION */}
+      <section id="gallery-grid" className="bg-cream py-16 text-earth">
+        <div className="max-w-[1240px] mx-auto px-5 md:px-10 lg:px-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredPhotos.map((photo) => (
+              <div
+                key={photo.id}
+                id={`photo-tile-${photo.id}`}
+                onClick={() => openLightbox(photo.id)}
+                className="group relative cursor-pointer overflow-hidden rounded-2xl bg-earth border border-earth/15 hover:shadow-xl transition-all h-[320px]"
+              >
+                <Image
+                  src={photo.image}
+                  alt={photo.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-all duration-300 opacity-90 group-hover:opacity-100"
+                  referrerPolicy="no-referrer"
+                />
+
+                {/* Cover Hover Overlay (Forest Canopy Overlay fading in) */}
+                <div className="absolute inset-0 bg-forest/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6">
+                  <div className="flex justify-end">
+                    <div className="p-2.5 bg-nanohana text-earth rounded-full shadow-md">
+                      <Maximize2 className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-cream text-left">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-nanohana font-semibold">
+                      {photo.category}
+                    </span>
+                    <h3 className="font-serif text-lg font-bold text-cream">
+                      {photo.title}
+                    </h3>
+                    <p className="text-[11px] text-cream/80 line-clamp-2 leading-relaxed">
+                      {photo.desc}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TRIPADVISOR PHOTO GALLERY DELEGATE (Forest Canopy bg) */}
+      <section id="tripadvisor-gallery" className="bg-forest text-cream py-16 text-center">
+        <div className="max-w-[650px] mx-auto px-5 space-y-4">
+          <Leaf className="w-8 h-8 text-nanohana mx-auto animate-pulse" />
+          <h2 className="font-serif text-2xl sm:text-3xl font-medium">Over 85 guest photos on TripAdvisor</h2>
+          <p className="text-cream/80 text-sm leading-relaxed">
+            See real, unedited photos posted straight from our hotel balconies, rooftop decks, and garden spaces by travelers like you.
+          </p>
+          <div className="pt-2">
+            <a
+              id="tripadvisor-photo-btn"
+              href="https://www.tripadvisor.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-white/35 text-cream hover:text-nanohana hover:border-nanohana transition-colors text-xs font-semibold"
+            >
+              See guest photos on TripAdvisor <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* FULL RESPONSIVE LIGHTBOX MODAL */}
+      {selectedPhotoIndex !== null && (
+        <div
+          id="lightbox-overlay"
+          className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-between p-4 cursor-pointer"
+          onClick={() => setSelectedPhotoIndex(null)}
+        >
+          {/* Lightbox Header Close */}
+          <div className="w-full flex justify-between items-center text-cream px-4 py-2 z-10">
+            <span className="text-xs font-mono tracking-widest uppercase">
+              Photo {selectedPhotoIndex + 1} of {photos.length}
+            </span>
+            <button
+              onClick={() => setSelectedPhotoIndex(null)}
+              className="p-1 rounded-full text-cream hover:text-nanohana transition-colors"
+              aria-label="Close Lightbox"
+            >
+              <X className="w-8 h-8" />
+            </button>
+          </div>
+
+          {/* Central Slide Navigation */}
+          <div className="relative w-full max-w-4xl h-[65vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            {/* Prev Trigger */}
+            <button
+              onClick={handlePrevMedia}
+              className="absolute left-2 p-2.5 rounded-full bg-white/5 border border-white/10 text-white hover:text-nanohana transition-colors z-25"
+              aria-label="Previous photo"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            {/* Core Image inside frame */}
+            <div className="relative w-full h-full max-h-full rounded-lg overflow-hidden border border-white/10">
+              <Image
+                src={photos[selectedPhotoIndex].image}
+                alt={photos[selectedPhotoIndex].title}
+                fill
+                className="object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            {/* Next Trigger */}
+            <button
+              onClick={handleNextMedia}
+              className="absolute right-2 p-2.5 rounded-full bg-white/5 border border-white/10 text-white hover:text-nanohana transition-colors z-25"
+              aria-label="Next photo"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Sinks Title & Explanation */}
+          <div className="text-center text-cream px-4 py-4 max-w-xl z-10 space-y-1">
+            <h3 className="font-serif text-xl font-bold text-cream">
+              {photos[selectedPhotoIndex].title}
+            </h3>
+            <p className="text-xs text-cream/75 leading-relaxed">
+              {photos[selectedPhotoIndex].desc}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
