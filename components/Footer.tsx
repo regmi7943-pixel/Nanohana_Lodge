@@ -1,8 +1,16 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Compass, Facebook } from 'lucide-react';
 
 export default function Footer() {
+  const searchParams = useSearchParams();
+  const isEditMode = searchParams.get('editMode') === 'true';
+
+  if (isEditMode) return null;
+
   return (
     <footer id="footer" className="bg-earth text-cream/90 pt-16 pb-12 border-t border-forest/10">
       <div className="max-w-[1240px] mx-auto px-6 md:px-10 lg:px-20">

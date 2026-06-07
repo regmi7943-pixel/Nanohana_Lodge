@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import EditableImage from '@/components/EditableImage';
 import {
   X,
   ChevronLeft,
@@ -10,8 +11,11 @@ import {
   ExternalLink,
   Leaf
 } from 'lucide-react';
+import EditableText from '@/components/EditableText';
 
-export default function GalleryPage() {
+export default function GalleryClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
+  const getText = (key: string) => content.find((c: any) => c.key === key)?.value;
+
   const [activeTab, setActiveTab] = useState('All');
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
@@ -117,7 +121,6 @@ export default function GalleryPage() {
               alt="Annapurna peaks backdrop"
               fill
               className="object-cover"
-              referrerPolicy="no-referrer"
             />
           </div>
           <div className="relative h-full w-full">
@@ -126,7 +129,6 @@ export default function GalleryPage() {
               alt="Rooftop blooming garden flowers"
               fill
               className="object-cover"
-              referrerPolicy="no-referrer"
             />
           </div>
           <div className="relative h-full w-full">
@@ -135,7 +137,6 @@ export default function GalleryPage() {
               alt="Lakeside Pokhara tidy bed"
               fill
               className="object-cover"
-              referrerPolicy="no-referrer"
             />
           </div>
           <div className="relative h-full w-full">
@@ -144,30 +145,23 @@ export default function GalleryPage() {
               alt="Sunset panoramic valleys"
               fill
               className="object-cover"
-              referrerPolicy="no-referrer"
             />
           </div>
-          <div className="absolute inset-0 bg-forest/45 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-forest/45 mix-blend-multiply pointer-events-none" />
         </div>
 
         {/* Content Details (Sits neatly with proper overlay contrast) */}
         <div className="relative z-10 text-center px-5 text-cream max-w-[800px] pt-16">
-          <span className="text-xs font-mono uppercase tracking-[0.2em] text-nanohana block mb-2 font-bold animate-pulse">
-            Photo Gallery
-          </span>
-          <h1 className="font-serif text-4xl sm:text-5xl font-medium tracking-tight mb-4">
-            See the lodge for yourself.
-          </h1>
-          <p className="text-cream/90 text-sm max-w-[500px] mx-auto leading-relaxed">
-            Beautiful flower gardens, clean polished bathrooms, fresh linens, and the epic snowy Himalayas towering directly above your morning coffee cup.
-          </p>
+          <EditableText as="span" page="gallery" contentKey="gallery_hero_subtitle" defaultText="Photo Gallery" currentText={getText('gallery_hero_subtitle')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-nanohana block mb-2 font-bold animate-pulse" />
+          <EditableText as="h1" page="gallery" contentKey="gallery_hero_title" defaultText="See the lodge for yourself." currentText={getText('gallery_hero_title')} editMode={editMode} className="font-serif text-4xl sm:text-5xl font-medium tracking-tight mb-4" />
+          <EditableText as="p" page="gallery" contentKey="gallery_hero_desc" defaultText="Beautiful flower gardens, clean polished bathrooms, fresh linens, and the epic snowy Himalayas towering directly above your morning coffee cup." currentText={getText('gallery_hero_desc')} editMode={editMode} className="text-cream/90 text-sm max-w-[500px] mx-auto leading-relaxed" />
         </div>
       </section>
 
       {/* FILTERABLE TABS ROW */}
       <section id="gallery-tabs-section" className="bg-cream py-6 border-b border-earth/10">
         <div className="max-w-[1240px] mx-auto px-5 md:px-10 lg:px-20 flex items-center justify-center sm:justify-start gap-2 overflow-x-auto no-scrollbar">
-          {tabs.map((tab) => (
+          {tabs.map((tab, idx) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -177,7 +171,7 @@ export default function GalleryPage() {
                   : 'text-earth/70 hover:text-earth hover:bg-earth/5'
               }`}
             >
-              {tab}
+              <EditableText as="span" page="gallery" contentKey={`gallery_tab_${idx}`} defaultText={tab} currentText={getText(`gallery_tab_${idx}`)} editMode={editMode} />
             </button>
           ))}
         </div>
@@ -199,7 +193,6 @@ export default function GalleryPage() {
                   alt={photo.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-all duration-300 opacity-90 group-hover:opacity-100"
-                  referrerPolicy="no-referrer"
                 />
 
                 {/* Cover Hover Overlay (Forest Canopy Overlay fading in) */}
@@ -211,15 +204,9 @@ export default function GalleryPage() {
                   </div>
 
                   <div className="space-y-1 text-cream text-left">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-nanohana font-semibold">
-                      {photo.category}
-                    </span>
-                    <h3 className="font-serif text-lg font-bold text-cream">
-                      {photo.title}
-                    </h3>
-                    <p className="text-[11px] text-cream/80 line-clamp-2 leading-relaxed">
-                      {photo.desc}
-                    </p>
+                    <EditableText as="span" page="gallery" contentKey={`gallery_item_${photo.id}_category`} defaultText={photo.category} currentText={getText(`gallery_item_${photo.id}_category`)} editMode={editMode} className="text-[10px] font-mono uppercase tracking-widest text-nanohana font-semibold" />
+                    <EditableText as="h3" page="gallery" contentKey={`gallery_item_${photo.id}_title`} defaultText={photo.title} currentText={getText(`gallery_item_${photo.id}_title`)} editMode={editMode} className="font-serif text-lg font-bold text-cream" />
+                    <EditableText as="p" page="gallery" contentKey={`gallery_item_${photo.id}_desc`} defaultText={photo.desc} currentText={getText(`gallery_item_${photo.id}_desc`)} editMode={editMode} className="text-[11px] text-cream/80 line-clamp-2 leading-relaxed" />
                   </div>
                 </div>
               </div>
@@ -232,10 +219,8 @@ export default function GalleryPage() {
       <section id="tripadvisor-gallery" className="bg-forest text-cream py-16 text-center">
         <div className="max-w-[650px] mx-auto px-5 space-y-4">
           <Leaf className="w-8 h-8 text-nanohana mx-auto animate-pulse" />
-          <h2 className="font-serif text-2xl sm:text-3xl font-medium">Over 85 guest photos on TripAdvisor</h2>
-          <p className="text-cream/80 text-sm leading-relaxed">
-            See real, unedited photos posted straight from our hotel balconies, rooftop decks, and garden spaces by travelers like you.
-          </p>
+          <EditableText as="h2" page="gallery" contentKey="gallery_tripadvisor_title" defaultText="Over 85 guest photos on TripAdvisor" currentText={getText('gallery_tripadvisor_title')} editMode={editMode} className="font-serif text-2xl sm:text-3xl font-medium" />
+          <EditableText as="p" page="gallery" contentKey="gallery_tripadvisor_desc" defaultText="See real, unedited photos posted straight from our hotel balconies, rooftop decks, and garden spaces by travelers like you." currentText={getText('gallery_tripadvisor_desc')} editMode={editMode} className="text-cream/80 text-sm leading-relaxed" />
           <div className="pt-2">
             <a
               id="tripadvisor-photo-btn"
@@ -244,7 +229,7 @@ export default function GalleryPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-white/35 text-cream hover:text-nanohana hover:border-nanohana transition-colors text-xs font-semibold"
             >
-              See guest photos on TripAdvisor <ExternalLink className="w-3.5 h-3.5" />
+              <EditableText as="span" page="gallery" contentKey="gallery_tripadvisor_btn" defaultText="See guest photos on TripAdvisor" currentText={getText('gallery_tripadvisor_btn')} editMode={editMode} /> <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
         </div>
@@ -260,7 +245,7 @@ export default function GalleryPage() {
           {/* Lightbox Header Close */}
           <div className="w-full flex justify-between items-center text-cream px-4 py-2 z-10">
             <span className="text-xs font-mono tracking-widest uppercase">
-              Photo {selectedPhotoIndex + 1} of {photos.length}
+              <EditableText as="span" page="gallery" contentKey="gallery_lightbox_photo" defaultText="Photo" currentText={getText('gallery_lightbox_photo')} editMode={editMode} /> {selectedPhotoIndex + 1} <EditableText as="span" page="gallery" contentKey="gallery_lightbox_of" defaultText="of" currentText={getText('gallery_lightbox_of')} editMode={editMode} /> {photos.length}
             </span>
             <button
               onClick={() => setSelectedPhotoIndex(null)}
@@ -289,7 +274,6 @@ export default function GalleryPage() {
                 alt={photos[selectedPhotoIndex].title}
                 fill
                 className="object-contain"
-                referrerPolicy="no-referrer"
               />
             </div>
 
@@ -305,12 +289,8 @@ export default function GalleryPage() {
 
           {/* Sinks Title & Explanation */}
           <div className="text-center text-cream px-4 py-4 max-w-xl z-10 space-y-1">
-            <h3 className="font-serif text-xl font-bold text-cream">
-              {photos[selectedPhotoIndex].title}
-            </h3>
-            <p className="text-xs text-cream/75 leading-relaxed">
-              {photos[selectedPhotoIndex].desc}
-            </p>
+            <EditableText as="h3" page="gallery" contentKey={`gallery_item_${photos[selectedPhotoIndex].id}_title`} defaultText={photos[selectedPhotoIndex].title} currentText={getText(`gallery_item_${photos[selectedPhotoIndex].id}_title`)} editMode={editMode} className="font-serif text-xl font-bold text-cream" />
+            <EditableText as="p" page="gallery" contentKey={`gallery_item_${photos[selectedPhotoIndex].id}_desc`} defaultText={photos[selectedPhotoIndex].desc} currentText={getText(`gallery_item_${photos[selectedPhotoIndex].id}_desc`)} editMode={editMode} className="text-xs text-cream/75 leading-relaxed" />
           </div>
         </div>
       )}

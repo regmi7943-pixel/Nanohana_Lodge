@@ -2,11 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 
 export default function CurtainLoader() {
   const [showCurtain, setShowCurtain] = useState(true);
   const [isOpening, setIsOpening] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const searchParams = useSearchParams();
+  const isEditMode = searchParams.get('editMode') === 'true';
 
   useEffect(() => {
     setIsClient(true);
@@ -30,7 +33,7 @@ export default function CurtainLoader() {
   // Avoid rendering anything on the server to prevent hydration mismatch with sessionStorage
   if (!isClient) return null;
 
-  if (!showCurtain) return null;
+  if (isEditMode || !showCurtain) return null;
 
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none flex">
