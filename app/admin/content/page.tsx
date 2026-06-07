@@ -16,7 +16,7 @@ const PAGES = [
 ] as const;
 
 export default function ContentEditor() {
-  const [activePage, setActivePage] = useState(PAGES[0]);
+  const [activePage, setActivePage] = useState<typeof PAGES[number]>(PAGES[0]);
   const [refreshCounters, setRefreshCounters] = useState<Record<string, number>>({});
   const [visitedPages, setVisitedPages] = useState<Set<string>>(new Set([PAGES[0].key]));
 

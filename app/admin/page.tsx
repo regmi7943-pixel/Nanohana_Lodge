@@ -15,7 +15,7 @@ export default function AdminDashboard() {
     async function loadData() {
       const content = await getAllContent();
       const rawBookings = content.find((c: any) => c.key === 'bookings_data')?.value;
-      let bookingsData = { inventory: {}, bookings: {} };
+      let bookingsData: any = { inventory: {}, bookings: {} };
       try { if (rawBookings) bookingsData = JSON.parse(rawBookings); } catch (e) {}
 
       const rawRequests = content.find((c: any) => c.key === 'booking_requests')?.value;

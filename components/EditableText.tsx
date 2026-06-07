@@ -83,7 +83,7 @@ export default function EditableText({
   // Edit Mode: completely native, seamless contentEditable approach
   return (
     <Component
-      ref={contentRef}
+      ref={contentRef as any}
       contentEditable={isEditing}
       suppressContentEditableWarning={true}
       onClick={(e: React.MouseEvent) => {

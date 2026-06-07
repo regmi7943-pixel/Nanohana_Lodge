@@ -225,7 +225,7 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
                     <EditableText as="h3" page="rooms" contentKey={`room_${room.id}_name`} defaultText={room.name} currentText={getText(`room_${room.id}_name`)} editMode={editMode} className="font-serif text-2xl sm:text-3xl text-earth font-medium leading-tight" />
                     <EditableText as="p" page="rooms" contentKey={`room_${room.id}_desc`} defaultText={room.desc} currentText={getText(`room_${room.id}_desc`)} editMode={editMode} className="text-earth/85 text-sm leading-relaxed" />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 pt-4 border-t border-earth/10 text-xs text-earth/80">
-                      {room.features.map((feat, i) => (
+                      {room.features.map((feat: string, i: number) => (
                         <div key={i} className={`flex items-center gap-2 ${i > 2 ? 'hidden sm:flex' : ''}`}>
                           <CheckCircle className="w-3.5 h-3.5 text-phewa flex-shrink-0" />
                           <EditableText as="span" page="rooms" contentKey={`room_${room.id}_feat_${i}`} defaultText={feat} currentText={getText(`room_${room.id}_feat_${i}`)} editMode={editMode} />
@@ -233,7 +233,7 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
                       ))}
                     </div>
                     <div className="hidden sm:flex flex-wrap gap-1.5 pt-4">
-                      {room.amenities.map((amenity, i) => (
+                      {room.amenities.map((amenity: string, i: number) => (
                         <EditableText as="span" page="rooms" contentKey={`room_${room.id}_amenity_${i}`} defaultText={amenity} currentText={getText(`room_${room.id}_amenity_${i}`)} editMode={editMode} key={i} className="px-2.5 py-1 rounded-full bg-sage/10 text-[10px] font-mono font-medium text-earth/80" />
                       ))}
                     </div>
