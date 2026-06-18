@@ -22,6 +22,7 @@ interface BookingRequest {
 }
 
 import { updateContent } from '@/app/actions/updateContent';
+import { updateBookingRequestStatus } from '@/app/actions/updateBookingRequestStatus';
 
 export default function BookingRequestsClient({ content = [] }: { content?: any[] }) {
   const rawRequests = content.find((c: any) => c.key === 'booking_requests')?.value;
@@ -40,15 +41,19 @@ export default function BookingRequestsClient({ content = [] }: { content?: any[
   const [sortByCheckIn, setSortByCheckIn] = useState<'asc' | 'desc' | null>(null);
 
   const handleAction = async (id: string, newStatus: RequestStatus) => {
+    if (newStatus === 'Pending') return;
     setProcessingId(id);
     try {
-      const updated = requests.map(req => 
-        req.id === id ? { ...req, status: newStatus } : req
-      );
-      
-      setRequests(updated);
-      await updateContent('global', 'booking_requests', JSON.stringify(updated));
-      toast.success(`Booking ${newStatus.toLowerCase()} successfully`);
+      const res = await updateBookingRequestStatus(id, newStatus);
+      if (res.error) {
+        toast.error(res.error);
+      } else {
+        if (res.requests) {
+          const sorted = [...res.requests].sort((a: any, b: any) => new Date(b.dateRequested).getTime() - new Date(a.dateRequested).getTime());
+          setRequests(sorted);
+        }
+        toast.success(`Booking ${newStatus.toLowerCase()} successfully`);
+      }
     } catch (e) {
       toast.error('Failed to update booking status');
     }

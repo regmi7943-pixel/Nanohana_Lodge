@@ -20,6 +20,7 @@ import {
 import EditableText from '@/components/EditableText';
 import EditableImage from '@/components/EditableImage';
 import toast from 'react-hot-toast';
+import { submitContactForm } from '@/app/actions/submitContactForm';
 
 export default function ContactClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
   const getText = React.useCallback((key: string) => content.find((c: any) => c.key === key)?.value, [content]);
@@ -35,28 +36,27 @@ export default function ContactClient({ content = [], editMode = false }: { cont
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) {
       toast.error('Please fill out the name, email, and message fields before sending.');
       return;
     }
     
-    // Basic client-side sanitization
-    const sanitize = (str: string) => str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    setFormData(prev => ({
-      ...prev,
-      name: sanitize(prev.name),
-      email: sanitize(prev.email),
-      message: sanitize(prev.message)
-    }));
-    
     setFormLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await submitContactForm(formData);
+      if (res.error) {
+        toast.error(res.error);
+      } else {
+        setFormSubmitted(true);
+        toast.success('Message sent successfully!');
+      }
+    } catch (err: any) {
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
       setFormLoading(false);
-      setFormSubmitted(true);
-      toast.success('Message sent successfully!');
-    }, 1500);
+    }
   };
 
   return (

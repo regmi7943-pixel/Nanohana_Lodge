@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { sendBookingRequestEmail } from '@/lib/email';
 
 function sanitizeString(str: string): string {
   if (typeof str !== 'string') return '';
@@ -52,6 +53,12 @@ export async function submitBookingRequest(newReq: any) {
 
   if (updateError) {
     return { error: updateError.message };
+  }
+
+  try {
+    await sendBookingRequestEmail(sanitizedReq);
+  } catch (emailErr) {
+    console.error('Failed to send booking request email notification:', emailErr);
   }
 
   revalidatePath('/reservations');
