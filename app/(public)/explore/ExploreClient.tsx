@@ -1,4 +1,4 @@
-'use client';
+
 
 import React from 'react';
 import Image from 'next/image';
@@ -18,7 +18,7 @@ import EditableText from '@/components/EditableText';
 import EditableImage from '@/components/EditableImage';
 
 export default function ExploreClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
-  const getText = (key: string) => content.find((c: any) => c.key === key)?.value;
+  const getText = React.useCallback((key: string) => content.find((c: any) => c.key === key)?.value, [content]);
 
   const locations = [
     { name: 'Basundhara Park', distance: '100m · 2 min walk', desc: 'Right next door. A calm, verdant local garden park perfect for quiet morning steps or reading.', icon: MapPin },
@@ -44,7 +44,7 @@ export default function ExploreClient({ content = [], editMode = false }: { cont
   return (
     <div id="explore-page" className="w-full">
       <section id="explore-hero" className="relative h-[55vh] min-h-[380px] w-full flex items-center justify-center">
-        <EditableImage page="explore" contentKey="explore_hero_bg" defaultSrc="https://picsum.photos/seed/phewautc/1600/900" currentSrc={getText('explore_hero_bg')} editMode={editMode} alt="Phewa Lake reflection" fill priority className="object-cover" referrerPolicy="no-referrer" />
+        <EditableImage page="explore" contentKey="explore_hero_bg" defaultSrc="https://picsum.photos/seed/phewautc/1600/900" currentSrc={getText('explore_hero_bg')} editMode={editMode} alt="Phewa Lake reflection" fill priority sizes="100vw" className="object-cover" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-forest/50 mix-blend-multiply pointer-events-none" />
         <div className="relative z-10 text-center px-5 text-cream max-w-[800px] pt-16">
           <EditableText as="span" page="explore" contentKey="explore_hero_eyebrow" defaultText="Local Sightseeing Guide" currentText={getText('explore_hero_eyebrow')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-cream/70 block mb-2" />

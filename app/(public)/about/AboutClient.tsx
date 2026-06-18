@@ -14,7 +14,7 @@ import {
 import EditableText from '@/components/EditableText';
 
 export default function AboutClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
-  const getText = (key: string) => content.find(c => c.key === key)?.value;
+  const getText = React.useCallback((key: string) => content.find(c => c.key === key)?.value, [content]);
 
   return (
     <div id="about-page" className="w-full">
@@ -29,6 +29,7 @@ export default function AboutClient({ content = [], editMode = false }: { conten
           alt="Lodge garden overview"
           fill
           priority
+          sizes="100vw"
           className="object-cover"
         />
         {/* Dark overlay for better text readability */}
@@ -456,7 +457,7 @@ export default function AboutClient({ content = [], editMode = false }: { conten
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.7, type: "spring", bounce: 0.3 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-[1240px] mx-auto px-5 md:px-10 lg:px-20"
         >
           <div className="p-8 sm:p-12 bg-white/50 border border-earth/10 rounded-2xl max-w-[900px] mx-auto flex flex-col items-center text-center space-y-6">

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 
-export default function CurtainLoader() {
+const CurtainLoader = () => {
   const [showCurtain, setShowCurtain] = useState(true);
   const [isOpening, setIsOpening] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -67,3 +67,4 @@ export default function CurtainLoader() {
     </div>
   );
 }
+export default React.memo(CurtainLoader);

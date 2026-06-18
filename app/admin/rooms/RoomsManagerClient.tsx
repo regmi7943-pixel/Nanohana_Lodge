@@ -7,6 +7,7 @@ import { updateContent } from '@/app/actions/updateContent';
 import { uploadImage } from '@/app/actions/uploadImage';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 
 function AdminDropdown({ label, value, onChange, options }: { label: string; value: string; onChange: (val: string) => void; options: { value: string; label: string }[] }) {
   const [open, setOpen] = React.useState(false);
@@ -67,15 +68,14 @@ function AdminDropdown({ label, value, onChange, options }: { label: string; val
 }
 
 export default function RoomsManagerClient({ content = [] }: { content?: any[] }) {
-  const rawRooms = content.find((c: any) => c.key === 'global_rooms_list')?.value;
-  let initialRooms: any[] = [];
-  try {
-    initialRooms = rawRooms ? JSON.parse(rawRooms) : defaultRooms;
-  } catch(e) {
-    initialRooms = defaultRooms;
-  }
-
-  const [rooms, setRooms] = useState<any[]>(initialRooms);
+  const [rooms, setRooms] = useState<any[]>(() => {
+    const rawRooms = content.find((c: any) => c.key === 'global_rooms_list')?.value;
+    try {
+      return rawRooms ? JSON.parse(rawRooms) : defaultRooms;
+    } catch(e) {
+      return defaultRooms;
+    }
+  });
   const [editingRoom, setEditingRoom] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -113,6 +113,7 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
       const updated = rooms.filter(r => r.id !== id);
       saveToDb(updated);
       if (editingRoom?.id === id) setEditingRoom(null);
+      toast.success('Room deleted');
     }
   };
 
@@ -121,6 +122,7 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
     const updated = rooms.map(r => r.id === editingRoom.id ? editingRoom : r);
     saveToDb(updated);
     setEditingRoom(null);
+    toast.success('Room saved successfully!');
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,7 +173,8 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
       </div>
 
       {editingRoom ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/5 border border-white/10 rounded-2xl p-6 lg:p-10 space-y-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/5 border border-white/10 rounded-2xl p-6 lg:p-10">
+          <form onSubmit={(e) => { e.preventDefault(); handleSaveRoomDetails(); }} className="space-y-8">
           <div className="flex items-center justify-between border-b border-white/10 pb-6">
             <h2 className="text-2xl font-serif font-bold text-nanohana flex items-center gap-3">
               <Edit className="w-6 h-6 text-white/50" /> Edit Room Details
@@ -282,11 +285,21 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
           </div>
 
           <div className="pt-8 border-t border-white/10 flex justify-end">
-            <button onClick={handleSaveRoomDetails} disabled={isSaving} className="px-8 py-4 rounded-full bg-nanohana text-earth font-bold text-lg hover:bg-nanohana/90 transition-all flex items-center gap-2 shadow-xl hover:scale-105 disabled:opacity-50">
+            <button type="submit" disabled={isSaving} className="px-8 py-4 rounded-full bg-nanohana text-earth font-bold text-lg hover:bg-nanohana/90 transition-all flex items-center gap-2 shadow-xl hover:scale-105 disabled:opacity-50">
               {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />} {isSaving ? 'Saving...' : 'Save All Changes'}
             </button>
           </div>
+          </form>
         </motion.div>
+      ) : rooms.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-white/5 border border-white/10 rounded-2xl">
+          <Bed className="w-16 h-16 text-cream/20 mb-4" />
+          <h3 className="text-xl font-serif text-white mb-2">No Rooms Found</h3>
+          <p className="text-cream/50 mb-6">You haven't added any rooms yet.</p>
+          <button onClick={handleAddNewRoom} className="flex items-center gap-2 px-6 py-3 rounded-full bg-nanohana text-earth font-bold hover:bg-nanohana/90 transition-all shadow-lg">
+            <Plus className="w-5 h-5" /> Add Your First Room
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
           <AnimatePresence>

@@ -1,5 +1,12 @@
 import RoomsClient from './RoomsClient';
 import { getAllContent } from '@/lib/content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Rooms & Suites',
+  description: 'Explore our clean, cozy, eco-conscious rooms and suites with mountain views at Nanohana Lodge.',
+};
+
 
 export const dynamic = 'force-dynamic';
 

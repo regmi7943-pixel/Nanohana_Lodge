@@ -14,7 +14,7 @@ interface EditableTextProps {
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div';
 }
 
-export default function EditableText({
+const EditableText = ({
   page,
   contentKey,
   defaultText,
@@ -22,7 +22,7 @@ export default function EditableText({
   editMode,
   className = '',
   as: Component = 'p'
-}: EditableTextProps) {
+}: EditableTextProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const contentRef = useRef<HTMLElement>(null);
@@ -110,3 +110,4 @@ export default function EditableText({
     </Component>
   );
 }
+export default React.memo(EditableText);

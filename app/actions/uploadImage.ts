@@ -1,6 +1,7 @@
 'use server';
 
 import { v2 as cloudinary } from 'cloudinary';
+import { requireAuth } from '@/lib/supabase-server';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -9,6 +10,12 @@ cloudinary.config({
 });
 
 export async function uploadImage(formData: FormData) {
+  try {
+    await requireAuth();
+  } catch (err: any) {
+    return { error: 'Unauthorized' };
+  }
+
   const file = formData.get('file') as File;
 
   if (!file) {
@@ -16,6 +23,11 @@ export async function uploadImage(formData: FormData) {
   }
 
   try {
+    // Basic MIME type validation
+    if (!file.type.startsWith('image/')) {
+      return { error: 'Only image files are allowed' };
+    }
+
     // Convert the file to a buffer for cloudinary upload
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -60,6 +72,12 @@ export async function uploadImage(formData: FormData) {
 }
 
 export async function getUploadedImages() {
+  try {
+    await requireAuth();
+  } catch (err: any) {
+    return { error: 'Unauthorized' };
+  }
+
   try {
     const result = await cloudinary.search
       .expression('folder:nanohana-lodge')

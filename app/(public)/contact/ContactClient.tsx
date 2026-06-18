@@ -19,9 +19,10 @@ import {
 } from 'lucide-react';
 import EditableText from '@/components/EditableText';
 import EditableImage from '@/components/EditableImage';
+import toast from 'react-hot-toast';
 
 export default function ContactClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
-  const getText = (key: string) => content.find((c: any) => c.key === key)?.value;
+  const getText = React.useCallback((key: string) => content.find((c: any) => c.key === key)?.value, [content]);
 
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -37,20 +38,31 @@ export default function ContactClient({ content = [], editMode = false }: { cont
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) {
-      alert('Please fill out the name, email, and message fields before sending.');
+      toast.error('Please fill out the name, email, and message fields before sending.');
       return;
     }
+    
+    // Basic client-side sanitization
+    const sanitize = (str: string) => str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    setFormData(prev => ({
+      ...prev,
+      name: sanitize(prev.name),
+      email: sanitize(prev.email),
+      message: sanitize(prev.message)
+    }));
+    
     setFormLoading(true);
     setTimeout(() => {
       setFormLoading(false);
       setFormSubmitted(true);
+      toast.success('Message sent successfully!');
     }, 1500);
   };
 
   return (
     <div id="contact-page" className="w-full">
       <section id="contact-hero" className="relative h-[55vh] min-h-[380px] w-full flex items-center justify-center">
-        <EditableImage page="contact" contentKey="contact_hero_bg" defaultSrc="https://picsum.photos/seed/teafresh/1600/900" currentSrc={getText('contact_hero_bg')} editMode={editMode} alt="Lodge garden entrance" fill priority className="object-cover" referrerPolicy="no-referrer" />
+        <EditableImage page="contact" contentKey="contact_hero_bg" defaultSrc="https://picsum.photos/seed/teafresh/1600/900" currentSrc={getText('contact_hero_bg')} editMode={editMode} alt="Lodge garden entrance" fill priority sizes="100vw" className="object-cover" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-forest/50 mix-blend-multiply pointer-events-none" />
         <div className="relative z-10 text-center px-5 text-cream max-w-[800px] pt-16">
           <EditableText as="span" page="contact" contentKey="contact_hero_eyebrow" defaultText="Contact & Location" currentText={getText('contact_hero_eyebrow')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-cream/70 block mb-2" />
@@ -80,30 +92,30 @@ export default function ContactClient({ content = [], editMode = false }: { cont
               <form onSubmit={handleSubmit} className="space-y-4 my-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Full Name *</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="e.g. Robin Green" required className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
+                    <label htmlFor="name" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Full Name *</label>
+                    <input id="name" type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="e.g. Robin Green" required className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Email *</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="e.g. robin@gmail.com" required className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Check-in Date (Optional)</label>
-                    <input type="date" name="checkin" value={formData.checkin} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Check-out Date (Optional)</label>
-                    <input type="date" name="checkout" value={formData.checkout} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
+                    <label htmlFor="email" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Email *</label>
+                    <input id="email" type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="e.g. robin@gmail.com" required className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Preferred Room Type</label>
-                    <select name="rooms" value={formData.rooms} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth">
+                    <label htmlFor="checkin" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Check-in Date (Optional)</label>
+                    <input id="checkin" type="date" name="checkin" value={formData.checkin} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
+                  </div>
+                  <div>
+                    <label htmlFor="checkout" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Check-out Date (Optional)</label>
+                    <input id="checkout" type="date" name="checkout" value={formData.checkout} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="rooms" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Preferred Room Type</label>
+                    <select id="rooms" name="rooms" value={formData.rooms} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth">
                       <option>Standard Room</option>
                       <option>Standard Garden View Room</option>
                       <option>Deluxe Terrace Room</option>
@@ -111,8 +123,8 @@ export default function ContactClient({ content = [], editMode = false }: { cont
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">How did you find us?</label>
-                    <select name="discovery" value={formData.discovery} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth">
+                    <label htmlFor="discovery" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">How did you find us?</label>
+                    <select id="discovery" name="discovery" value={formData.discovery} onChange={handleInputChange} className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth">
                       <option>Search Engine</option>
                       <option>TripAdvisor Recommendation</option>
                       <option>Booking.com or Agoda</option>
@@ -122,8 +134,8 @@ export default function ContactClient({ content = [], editMode = false }: { cont
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Your Message / Special Requests *</label>
-                  <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell us about your flight time, your trek plans, or extra bedding needs..." required className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
+                  <label htmlFor="message" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Your Message / Special Requests *</label>
+                  <textarea id="message" name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell us about your flight time, your trek plans, or extra bedding needs..." required className="w-full bg-cream rounded-lg border border-earth/15 px-3 py-2 text-sm focus:outline-none focus:border-phewa text-earth" />
                 </div>
 
                 <div className="pt-2">

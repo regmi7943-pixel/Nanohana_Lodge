@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Inbox, Check, X, Loader2, Trash2, CalendarX } from 'lucide-react';
+import { Inbox, Check, X, Loader2, Trash2, CalendarX, Search, Filter, ArrowUpDown } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 type RequestStatus = 'Pending' | 'Confirmed' | 'Rejected';
 
@@ -34,37 +35,68 @@ export default function BookingRequestsClient({ content = [] }: { content?: any[
   const [requests, setRequests] = useState<BookingRequest[]>(initialRequests);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'All' | RequestStatus>('All');
+  const [sortByCheckIn, setSortByCheckIn] = useState<'asc' | 'desc' | null>(null);
+
   const handleAction = async (id: string, newStatus: RequestStatus) => {
     setProcessingId(id);
-    
-    const updated = requests.map(req => 
-      req.id === id ? { ...req, status: newStatus } : req
-    );
-    
-    setRequests(updated);
-    await updateContent('global', 'booking_requests', JSON.stringify(updated));
+    try {
+      const updated = requests.map(req => 
+        req.id === id ? { ...req, status: newStatus } : req
+      );
+      
+      setRequests(updated);
+      await updateContent('global', 'booking_requests', JSON.stringify(updated));
+      toast.success(`Booking ${newStatus.toLowerCase()} successfully`);
+    } catch (e) {
+      toast.error('Failed to update booking status');
+    }
     setProcessingId(null);
   };
 
   const handleDelete = async (id: string) => {
     setProcessingId(id);
-    
-    const updated = requests.filter(req => req.id !== id);
-    
-    setRequests(updated);
-    await updateContent('global', 'booking_requests', JSON.stringify(updated));
+    try {
+      const updated = requests.filter(req => req.id !== id);
+      
+      setRequests(updated);
+      await updateContent('global', 'booking_requests', JSON.stringify(updated));
+      toast.success('Booking deleted successfully');
+    } catch (e) {
+      toast.error('Failed to delete booking');
+    }
     setProcessingId(null);
   };
 
   const handleBulkDeleteRejected = async () => {
     setProcessingId('bulk-delete');
-    const updated = requests.filter(req => req.status !== 'Rejected');
-    setRequests(updated);
-    await updateContent('global', 'booking_requests', JSON.stringify(updated));
+    try {
+      const updated = requests.filter(req => req.status !== 'Rejected');
+      setRequests(updated);
+      await updateContent('global', 'booking_requests', JSON.stringify(updated));
+      toast.success('Rejected requests cleared');
+    } catch (e) {
+      toast.error('Failed to clear rejected requests');
+    }
     setProcessingId(null);
   };
 
   const hasRejected = requests.some(req => req.status === 'Rejected');
+
+  let filteredRequests = requests.filter(req => {
+    const matchesSearch = req.guestName.toLowerCase().includes(searchQuery.toLowerCase()) || req.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'All' ? true : req.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  if (sortByCheckIn) {
+    filteredRequests.sort((a, b) => {
+      const timeA = new Date(a.checkIn).getTime();
+      const timeB = new Date(b.checkIn).getTime();
+      return sortByCheckIn === 'asc' ? timeA - timeB : timeB - timeA;
+    });
+  }
 
   return (
     <div className="max-w-6xl space-y-6 pb-20">
@@ -88,6 +120,41 @@ export default function BookingRequestsClient({ content = [] }: { content?: any[
         )}
       </div>
 
+      <div className="flex flex-col md:flex-row gap-4 bg-[#1a1a1a] p-4 rounded-lg border border-white/10">
+        <div className="flex-1 relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-cream/40" />
+          <input 
+            type="text" 
+            placeholder="Search by name or email..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-cream/40 focus:outline-none focus:border-nanohana transition-colors"
+          />
+        </div>
+        <div className="flex gap-4">
+          <div className="relative">
+            <Filter className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-cream/40" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="bg-white/5 border border-white/10 rounded-lg pl-10 pr-8 py-2 text-sm text-white appearance-none focus:outline-none focus:border-nanohana transition-colors"
+            >
+              <option value="All" className="bg-[#1a1a1a]">All Statuses</option>
+              <option value="Pending" className="bg-[#1a1a1a]">Pending</option>
+              <option value="Confirmed" className="bg-[#1a1a1a]">Confirmed</option>
+              <option value="Rejected" className="bg-[#1a1a1a]">Rejected</option>
+            </select>
+          </div>
+          <button
+            onClick={() => setSortByCheckIn(prev => prev === 'asc' ? 'desc' : 'asc')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors text-sm ${sortByCheckIn ? 'bg-nanohana/10 border-nanohana text-nanohana' : 'bg-white/5 border-white/10 text-cream hover:bg-white/10'}`}
+          >
+            <ArrowUpDown className="w-4 h-4" />
+            Sort by Date
+          </button>
+        </div>
+      </div>
+
       <div className="bg-[#1a1a1a] border border-white/10 rounded-lg overflow-x-auto">
         <table className="w-full text-left text-sm text-cream">
           <thead className="bg-white/5 border-b border-white/10 text-cream/70 text-xs uppercase tracking-wider font-mono">
@@ -102,7 +169,7 @@ export default function BookingRequestsClient({ content = [] }: { content?: any[
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {requests.map((req) => (
+            {filteredRequests.map((req) => (
               <tr key={req.id} className="hover:bg-white/5 transition-colors">
                 <td className="p-4 font-mono text-xs text-cream/50">{req.id}</td>
                 <td className="p-4">
@@ -160,7 +227,7 @@ export default function BookingRequestsClient({ content = [] }: { content?: any[
                 </td>
               </tr>
             ))}
-            {requests.length === 0 && (
+            {filteredRequests.length === 0 && (
               <tr>
                 <td colSpan={7} className="p-16 text-center">
                   <div className="flex flex-col items-center justify-center space-y-4">
@@ -169,7 +236,7 @@ export default function BookingRequestsClient({ content = [] }: { content?: any[
                     </div>
                     <div>
                       <p className="text-cream/80 font-serif text-lg font-medium">No Booking Requests</p>
-                      <p className="text-cream/40 text-sm mt-1">There are currently no new booking requests from the website.</p>
+                      <p className="text-cream/40 text-sm mt-1">There are currently no booking requests matching your filters.</p>
                     </div>
                   </div>
                 </td>

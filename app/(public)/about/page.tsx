@@ -1,5 +1,12 @@
 import AboutClient from './AboutClient';
 import { getAllContent } from '@/lib/content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Our Story',
+  description: 'Learn about the history and family behind Nanohana Lodge in Lakeside Pokhara.',
+};
+
 
 export const dynamic = 'force-dynamic';
 

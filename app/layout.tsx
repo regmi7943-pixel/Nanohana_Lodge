@@ -15,8 +15,48 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
-  title: 'Nanohana Lodge | Garden Oasis Guesthouse in Lakeside Pokhara, Nepal',
+  metadataBase: new URL('https://nanohanalodge.com'), // Using a placeholder domain for Next.js metadataBase
+  title: {
+    default: 'Nanohana Lodge | Garden Oasis Guesthouse in Lakeside Pokhara, Nepal',
+    template: '%s | Nanohana Lodge',
+  },
   description: 'Clean, cozy, eco-conscious guesthouse with mountain views from $12/night. Family-run in Lakeside Pokhara, next to Basundhara Park.',
+  openGraph: {
+    title: 'Nanohana Lodge | Garden Oasis Guesthouse',
+    description: 'Clean, cozy, eco-conscious guesthouse with mountain views from $12/night. Family-run in Lakeside Pokhara, next to Basundhara Park.',
+    url: 'https://nanohanalodge.com',
+    siteName: 'Nanohana Lodge',
+    images: [
+      {
+        url: '/logo_nanohana.png', // Fallback image
+        width: 800,
+        height: 600,
+        alt: 'Nanohana Lodge Logo',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Nanohana Lodge | Garden Oasis Guesthouse',
+    description: 'Clean, cozy, eco-conscious guesthouse with mountain views from $12/night. Family-run in Lakeside Pokhara.',
+    images: ['/logo_nanohana.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 import SecretKeybind from '@/components/SecretKeybind';

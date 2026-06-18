@@ -11,9 +11,6 @@ export default function SecretKeybind() {
     const handleKeyDown = (e: KeyboardEvent) => {
       setKeys((prev) => {
         const newKeys = (prev + e.key).slice(-6);
-        if (newKeys === '123123') {
-          router.push('/12312341');
-        }
         return newKeys;
       });
     };
@@ -21,6 +18,12 @@ export default function SecretKeybind() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [router]);
+
+  useEffect(() => {
+    if (keys === '123123') {
+      router.push('/12312341');
+    }
+  }, [keys, router]);
 
   return null;
 }

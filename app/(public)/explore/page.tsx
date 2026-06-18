@@ -1,5 +1,12 @@
 import ExploreClient from './ExploreClient';
 import { getAllContent } from '@/lib/content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Explore Pokhara',
+  description: 'Discover nearby attractions, trekking routes, and the best of Lakeside Pokhara during your stay.',
+};
+
 
 export const dynamic = 'force-dynamic';
 

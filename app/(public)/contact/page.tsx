@@ -1,5 +1,12 @@
 import ContactClient from './ContactClient';
 import { getAllContent } from '@/lib/content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Contact Us',
+  description: 'Get in touch with Nanohana Lodge for inquiries, bookings, and directions to our Pokhara guesthouse.',
+};
+
 
 export const dynamic = 'force-dynamic';
 

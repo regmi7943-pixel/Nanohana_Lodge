@@ -22,7 +22,8 @@ import {
 import EditableText from '@/components/EditableText';
 import EditableImage from '@/components/EditableImage';
 import { defaultRooms } from '@/lib/defaultRooms';
-import { updateContent } from '@/app/actions/updateContent';
+import { submitBookingRequest } from '@/app/actions/submitBookingRequest';
+import toast from 'react-hot-toast';
 
 type BookingsData = {
   inventory: Record<string, number>;
@@ -30,26 +31,32 @@ type BookingsData = {
 };
 
 export default function ReservationsClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
-  const getText = (key: string) => content.find((c: any) => c.key === key)?.value;
+  const getText = React.useCallback((key: string) => content.find((c: any) => c.key === key)?.value, [content]);
 
   // Load dynamic rooms from DB, falling back to hardcoded defaults
   const rawRooms = content.find((c: any) => c.key === 'global_rooms_list')?.value;
-  let rooms: any[] = defaultRooms;
-  try {
-    if (rawRooms) rooms = JSON.parse(rawRooms);
-  } catch (e) {}
+  const rooms = React.useMemo(() => {
+    if (rawRooms) {
+      try { return JSON.parse(rawRooms); } catch (e) {}
+    }
+    return defaultRooms;
+  }, [rawRooms]);
 
   const rawBookings = content.find((c: any) => c.key === 'bookings_data')?.value;
-  let bookingsData: BookingsData = { inventory: {}, bookings: {} };
-  try {
-    if (rawBookings) bookingsData = JSON.parse(rawBookings);
-  } catch (e) {}
+  const bookingsData: BookingsData = React.useMemo(() => {
+    if (rawBookings) {
+      try { return JSON.parse(rawBookings); } catch (e) {}
+    }
+    return { inventory: {}, bookings: {} };
+  }, [rawBookings]);
 
   const rawRequests = content.find((c: any) => c.key === 'booking_requests')?.value;
-  let initialRequestsList: any[] = [];
-  try {
-    if (rawRequests) initialRequestsList = JSON.parse(rawRequests);
-  } catch(e) {}
+  const initialRequestsList = React.useMemo(() => {
+    if (rawRequests) {
+      try { return JSON.parse(rawRequests); } catch(e) {}
+    }
+    return [];
+  }, [rawRequests]);
 
   const [bookingRequestsList, setBookingRequestsList] = useState<any[]>(initialRequestsList);
 
@@ -122,13 +129,13 @@ export default function ReservationsClient({ content = [], editMode = false }: {
       }
       
       // Also count Pending and Confirmed requests
-      const reqStartTimes = bookingRequestsList.map(r => new Date(r.checkIn + 'T00:00:00').getTime());
-      const reqEndTimes = bookingRequestsList.map(r => new Date(r.checkOut + 'T00:00:00').getTime());
+      const reqStartTimes = bookingRequestsList.map((r: any) => new Date(r.checkIn + 'T00:00:00').getTime());
+      const reqEndTimes = bookingRequestsList.map((r: any) => new Date(r.checkOut + 'T00:00:00').getTime());
       const dTime = curr.getTime();
 
       let requestedRoomsCount = 0;
       bookingRequestsList.forEach((req, index) => {
-        if (req.status !== 'Rejected' && req.roomType === (rooms.find(r => r.id === selectedCatId)?.name)) {
+        if (req.status !== 'Rejected' && req.roomType === (rooms.find((r: any) => r.id === selectedCatId)?.name)) {
           // Check if current date is between checkIn (inclusive) and checkOut (exclusive)
           if (dTime >= reqStartTimes[index] && dTime < reqEndTimes[index]) {
             requestedRoomsCount += (req.roomsCount || 1);
@@ -173,7 +180,7 @@ export default function ReservationsClient({ content = [], editMode = false }: {
     let requestedRoomsCount = 0;
     const dTime = date.getTime();
     bookingRequestsList.forEach((req) => {
-      if (req.status !== 'Rejected' && req.roomType === (rooms.find(r => r.id === catId)?.name)) {
+      if (req.status !== 'Rejected' && req.roomType === (rooms.find((r: any) => r.id === catId)?.name)) {
         const start = new Date(req.checkIn + 'T00:00:00').getTime();
         const end = new Date(req.checkOut + 'T00:00:00').getTime();
         if (dTime >= start && dTime < end) {
@@ -185,7 +192,7 @@ export default function ReservationsClient({ content = [], editMode = false }: {
     return Math.max(0, totalRooms - bookedCount - requestedRoomsCount);
   };
 
-  const selectedRoomDetails = rooms.find(r => r.id === selectedCatId);
+  const selectedRoomDetails = rooms.find((r: any) => r.id === selectedCatId);
   const basePrice = selectedRoomDetails ? parseInt(selectedRoomDetails.price.replace('$', '')) : 12;
 
   const getCalculatedPrice = () => {
@@ -332,14 +339,14 @@ export default function ReservationsClient({ content = [], editMode = false }: {
       <div className="space-y-5 flex-grow">
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Choose Your Room</label>
-            <select value={selectedCatId} onChange={(e) => setSelectedCatId(e.target.value)} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
-              {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            <label htmlFor="selectedCatId" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Choose Your Room</label>
+            <select id="selectedCatId" value={selectedCatId} onChange={(e) => setSelectedCatId(e.target.value)} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
+              {rooms.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Rooms Requested</label>
-            <select value={roomsCount} onChange={(e) => setRoomsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
+            <label htmlFor="roomsCount" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Rooms Requested</label>
+            <select id="roomsCount" value={roomsCount} onChange={(e) => setRoomsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
               <option value={1}>1 Room</option>
               <option value={2}>2 Rooms</option>
               <option value={3}>3 Rooms</option>
@@ -347,8 +354,8 @@ export default function ReservationsClient({ content = [], editMode = false }: {
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Travelers</label>
-            <select value={guestsCount} onChange={(e) => setGuestsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
+            <label htmlFor="guestsCount" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Travelers</label>
+            <select id="guestsCount" value={guestsCount} onChange={(e) => setGuestsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
               <option value={1}>1 Adult</option>
               <option value={2}>2 Adults</option>
               <option value={3}>3 Adults / Family</option>
@@ -403,7 +410,7 @@ export default function ReservationsClient({ content = [], editMode = false }: {
                     <div className="font-serif text-xl font-bold text-nanohana">${getCalculatedPrice()}</div>
                   </div>
                   <button onClick={() => goToStep('details', 1)} className="px-6 py-3 lg:px-5 lg:py-2.5 rounded-lg bg-nanohana text-earth font-sans text-sm lg:text-xs font-bold hover:bg-nanohana/90 transition-colors shadow-sm">
-                    Lock in Reservation
+                    Continue to Guest Details
                   </button>
                 </div>
               </div>
@@ -435,26 +442,31 @@ export default function ReservationsClient({ content = [], editMode = false }: {
             guestsCount, roomsCount, totalPrice: getCalculatedPrice(), status: 'Pending', dateRequested: new Date().toISOString()
           };
           const updatedList = [...bookingRequestsList, newReq];
-          setBookingRequestsList(updatedList);
-          await updateContent('global', 'booking_requests', JSON.stringify(updatedList));
+          setBookingRequestsList(updatedList); // Optimistic UI update
+          const result = await submitBookingRequest(newReq);
           setIsSubmitting(false);
+          if (result.error) {
+             toast.error('Failed to submit booking request.');
+             return;
+          }
           goToStep('success', 1);
+          toast.success('Booking request sent successfully!');
         }}
         className="flex flex-col flex-grow justify-between space-y-6"
       >
         <div className="space-y-4">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Full Name</label>
-            <input type="text" required value={guestName} onChange={e=>setGuestName(e.target.value)} className="w-full bg-cream/50 rounded-lg border border-earth/15 px-3 py-2.5 text-sm focus:outline-none focus:border-phewa" placeholder="John Doe" />
+            <label htmlFor="guestName" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Full Name</label>
+            <input id="guestName" type="text" required value={guestName} onChange={e=>setGuestName(e.target.value)} className="w-full bg-cream/50 rounded-lg border border-earth/15 px-3 py-2.5 text-sm focus:outline-none focus:border-phewa" placeholder="John Doe" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Email</label>
-              <input type="email" required value={guestEmail} onChange={e=>setGuestEmail(e.target.value)} className="w-full bg-cream/50 rounded-lg border border-earth/15 px-3 py-2.5 text-sm focus:outline-none focus:border-phewa" placeholder="john@example.com" />
+              <label htmlFor="guestEmail" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Email</label>
+              <input id="guestEmail" type="email" required value={guestEmail} onChange={e=>setGuestEmail(e.target.value)} className="w-full bg-cream/50 rounded-lg border border-earth/15 px-3 py-2.5 text-sm focus:outline-none focus:border-phewa" placeholder="john@example.com" />
             </div>
             <div>
-              <label className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Phone</label>
-              <input type="tel" required value={guestPhone} onChange={e=>setGuestPhone(e.target.value)} className="w-full bg-cream/50 rounded-lg border border-earth/15 px-3 py-2.5 text-sm focus:outline-none focus:border-phewa" placeholder="+1 234 567 890" />
+              <label htmlFor="guestPhone" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Phone</label>
+              <input id="guestPhone" type="tel" required value={guestPhone} onChange={e=>setGuestPhone(e.target.value)} className="w-full bg-cream/50 rounded-lg border border-earth/15 px-3 py-2.5 text-sm focus:outline-none focus:border-phewa" placeholder="+1 234 567 890" />
             </div>
           </div>
           <div className="bg-cream/30 p-4 rounded-lg border border-earth/5 mt-4">
@@ -494,7 +506,7 @@ export default function ReservationsClient({ content = [], editMode = false }: {
     <div id="reservations-page" className="w-full">
       {/* SUB-HERO SECTION */}
       <section id="reservations-hero" className="relative bg-forest py-24 text-center border-b border-white/5 overflow-hidden">
-        <EditableImage page="reservations" contentKey="reservations_hero_bg" defaultSrc="https://picsum.photos/seed/reservationhero/1600/900" currentSrc={getText('reservations_hero_bg')} editMode={editMode} alt="Lodge exterior" fill priority className="object-cover opacity-20" referrerPolicy="no-referrer" />
+        <EditableImage page="reservations" contentKey="reservations_hero_bg" defaultSrc="https://picsum.photos/seed/reservationhero/1600/900" currentSrc={getText('reservations_hero_bg')} editMode={editMode} alt="Lodge exterior" fill priority sizes="100vw" className="object-cover opacity-20" referrerPolicy="no-referrer" />
         <div className="relative z-10 max-w-[800px] mx-auto px-5 space-y-4 pt-12 text-cream">
           <EditableText as="span" page="reservations" contentKey="reservations_hero_subtitle" defaultText={`Official Booking Portal`} currentText={getText('reservations_hero_subtitle')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-nanohana font-bold block" />
           <EditableText as="h1" page="reservations" contentKey="reservations_hero_title" defaultText={`Book direct. Best rate guaranteed.`} currentText={getText('reservations_hero_title')} editMode={editMode} className="font-serif text-4xl sm:text-5xl font-medium tracking-tight" />
@@ -616,13 +628,13 @@ export default function ReservationsClient({ content = [], editMode = false }: {
             {/* Card 2 */}
             <div className="p-5 bg-cream border border-earth/10 rounded-xl space-y-2">
               <EditableText as="span" page="reservations" contentKey="res_policy_2_title" defaultText={`02. Check-Out hour`} currentText={getText('res_policy_2_title')} editMode={editMode} className="font-bold underline block font-serif text-sm text-earth" />
-              <EditableText as="p" page="reservations" contentKey="res_policy_2_desc" defaultText={`Secure your luggage and hand keys details before 12:00 noon. Late checking adjustments are subject strictly to room availabilities.`} currentText={getText('res_policy_2_desc')} editMode={editMode} className="leading-relaxed text-earth/75" />
+              <EditableText as="p" page="reservations" contentKey="res_policy_2_desc" defaultText={`Please return your keys before 12:00 noon. Late check-outs are subject to availability.`} currentText={getText('res_policy_2_desc')} editMode={editMode} className="leading-relaxed text-earth/75" />
             </div>
 
             {/* Card 3 */}
             <div className="p-5 bg-cream border border-earth/10 rounded-xl space-y-2">
               <EditableText as="span" page="reservations" contentKey="res_policy_3_title" defaultText={`03. Children & Cot policies`} currentText={getText('res_policy_3_title')} editMode={editMode} className="font-bold underline block font-serif text-sm text-earth" />
-              <EditableText as="p" page="reservations" contentKey="res_policy_3_desc" defaultText={`Ages 0–8 stay free when utilizing identical beds. No baby cribs or rollaway layers are managed at the lodge premises.`} currentText={getText('res_policy_3_desc')} editMode={editMode} className="leading-relaxed text-earth/75" />
+              <EditableText as="p" page="reservations" contentKey="res_policy_3_desc" defaultText={`Ages 0-8 stay free using existing beds.`} currentText={getText('res_policy_3_desc')} editMode={editMode} className="leading-relaxed text-earth/75" />
             </div>
 
             {/* Card 4 */}

@@ -1,4 +1,4 @@
-'use client';
+
 
 import React from 'react';
 import EditableImage from '@/components/EditableImage';
@@ -19,7 +19,7 @@ import {
 import EditableText from '@/components/EditableText';
 
 export default function FacilitiesClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
-  const getText = (key: string) => content.find((c: any) => c.key === key)?.value;
+  const getText = React.useCallback((key: string) => content.find((c: any) => c.key === key)?.value, [content]);
 
   const facilityRows = [
     {
@@ -93,6 +93,7 @@ export default function FacilitiesClient({ content = [], editMode = false }: { c
           alt="Rooftop garden view at Nanohana"
           fill
           priority
+          sizes="100vw"
           className="object-cover"
           referrerPolicy="no-referrer"
         />

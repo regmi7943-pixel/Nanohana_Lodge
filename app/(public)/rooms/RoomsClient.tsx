@@ -25,7 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { defaultRooms } from '@/lib/defaultRooms';
 
 export default function RoomsClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
-  const getText = (key: string) => content.find((c: any) => c.key === key)?.value;
+  const getText = React.useCallback((key: string) => content.find((c: any) => c.key === key)?.value, [content]);
 
   const [activeFilter, setActiveFilter] = useState('All');
   
@@ -37,32 +37,36 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
   const categories = ['All', 'Economy', 'Standard', 'Deluxe'];
 
   const rawRooms = content.find((c: any) => c.key === 'global_rooms_list')?.value;
-  let DB_ROOMS: any[] = [];
-  try {
-    DB_ROOMS = rawRooms ? JSON.parse(rawRooms) : defaultRooms;
-  } catch(e) {
-    DB_ROOMS = defaultRooms;
-  }
+  
+  const DB_ROOMS = React.useMemo(() => {
+    try {
+      return rawRooms ? JSON.parse(rawRooms) : defaultRooms;
+    } catch(e) {
+      return defaultRooms;
+    }
+  }, [rawRooms]);
 
-  const getGallery = (roomId: string, defaultGallery: any[]) => {
+  const getGallery = React.useCallback((roomId: string, defaultGallery: any[]) => {
     const raw = getText(`gallery_${roomId}`);
     if (raw) {
       try { return JSON.parse(raw); } catch (e) { return defaultGallery; }
     }
     return defaultGallery;
-  };
+  }, [getText]);
 
-  const filteredRooms = DB_ROOMS.map(r => ({
-    ...r,
-    gallery: getGallery(r.id, r.gallery)
-  })).filter((room) => {
-    if (activeFilter === 'All') return true;
-    if (activeFilter === 'Economy') return room.category === 'Economy';
-    if (activeFilter === 'Standard') return room.category === 'Standard';
-    if (activeFilter === 'Deluxe') return room.category === 'Deluxe';
-    if (activeFilter === 'Mountain View') return room.view === 'Mountain View' || room.view === 'Mountain view';
-    return true;
-  });
+  const filteredRooms = React.useMemo(() => {
+    return DB_ROOMS.map((r: any) => ({
+      ...r,
+      gallery: getGallery(r.id, r.gallery)
+    })).filter((room: any) => {
+      if (activeFilter === 'All') return true;
+      if (activeFilter === 'Economy') return room.category === 'Economy';
+      if (activeFilter === 'Standard') return room.category === 'Standard';
+      if (activeFilter === 'Deluxe') return room.category === 'Deluxe';
+      if (activeFilter === 'Mountain View') return room.view === 'Mountain View' || room.view === 'Mountain view';
+      return true;
+    });
+  }, [DB_ROOMS, getGallery, activeFilter]);
 
   const openGallery = (room: any) => {
     setActiveGalleryRoom(room);
@@ -147,6 +151,7 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
                       src={getFilteredGalleryImages()[currentImageIndex]?.url}
                       alt={`${activeGalleryTab} view`}
                       fill
+                      sizes="100vw"
                       className="object-contain"
                     />
                   </div>
@@ -169,7 +174,7 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
                     currentImageIndex === idx ? 'ring-nanohana opacity-100' : 'ring-transparent opacity-50 hover:opacity-100'
                   }`}
                 >
-                  <Image src={img.url} alt="thumbnail" fill className="object-cover" />
+                  <Image src={img.url} alt="thumbnail" fill sizes="20vw" className="object-cover" />
                 </button>
               ))}
             </div>
@@ -178,7 +183,7 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
       </AnimatePresence>
 
       <section id="rooms-hero" className="relative h-[55vh] min-h-[380px] w-full flex items-center justify-center">
-        <EditableImage page="rooms" contentKey="rooms_hero_bg" defaultSrc="https://picsum.photos/seed/nanohanadeluxe/1600/900" currentSrc={getText('rooms_hero_bg')} editMode={editMode} alt="Mountain view from terrace" fill priority className="object-cover" referrerPolicy="no-referrer" />
+        <EditableImage page="rooms" contentKey="rooms_hero_bg" defaultSrc="https://picsum.photos/seed/nanohanadeluxe/1600/900" currentSrc={getText('rooms_hero_bg')} editMode={editMode} alt="Mountain view from terrace" fill priority sizes="100vw" className="object-cover" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-forest/50 mix-blend-multiply pointer-events-none" />
         <div className="relative z-10 text-center px-5 text-cream max-w-[800px] pt-16">
           <EditableText as="span" page="rooms" contentKey="rooms_hero_eyebrow" defaultText="Rooms & Suites" currentText={getText('rooms_hero_eyebrow')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-cream/70 block mb-2" />
@@ -203,68 +208,99 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
         </div>
       </section>
 
-      <section id="room-listings" className="bg-cream py-16 text-earth">
-        <div className="max-w-[1240px] mx-auto px-5 md:px-10 lg:px-20 space-y-16">
-          {filteredRooms.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="font-serif text-lg text-earth/70">No rooms match this active filter. See our full collection by tapping another tab.</p>
-            </div>
-          ) : (
-            filteredRooms.map((room, index) => (
-              <div key={room.id} id={`room-card-${index}`} className="flex flex-col-reverse lg:grid lg:grid-cols-12 rounded-2xl overflow-hidden border border-earth/10 bg-cream/50 hover:shadow-lg transition-all">
-                <div className={`lg:col-span-7 p-6 sm:p-12 flex flex-col justify-between space-y-6 ${index % 2 === 1 ? 'lg:order-last' : ''}`}>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <EditableText as="span" page="rooms" contentKey={`room_${room.id}_category`} defaultText={room.category} currentText={getText(`room_${room.id}_category`)} editMode={editMode} className="text-xs font-mono uppercase tracking-widest text-phewa font-bold" />
-                      {room.popular && (
-                        <span className="px-3 py-1 rounded bg-forest text-cream font-sans font-semibold text-[10px] uppercase tracking-wide flex items-center gap-1">
-                          <Award className="w-3 h-3" /> Most Popular
-                        </span>
-                      )}
-                    </div>
-                    <EditableText as="h3" page="rooms" contentKey={`room_${room.id}_name`} defaultText={room.name} currentText={getText(`room_${room.id}_name`)} editMode={editMode} className="font-serif text-2xl sm:text-3xl text-earth font-medium leading-tight" />
-                    <EditableText as="p" page="rooms" contentKey={`room_${room.id}_desc`} defaultText={room.desc} currentText={getText(`room_${room.id}_desc`)} editMode={editMode} className="text-earth/85 text-sm leading-relaxed" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 pt-4 border-t border-earth/10 text-xs text-earth/80">
-                      {room.features.map((feat: string, i: number) => (
-                        <div key={i} className={`flex items-center gap-2 ${i > 2 ? 'hidden sm:flex' : ''}`}>
-                          <CheckCircle className="w-3.5 h-3.5 text-phewa flex-shrink-0" />
-                          <EditableText as="span" page="rooms" contentKey={`room_${room.id}_feat_${i}`} defaultText={feat} currentText={getText(`room_${room.id}_feat_${i}`)} editMode={editMode} />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="hidden sm:flex flex-wrap gap-1.5 pt-4">
-                      {room.amenities.map((amenity: string, i: number) => (
-                        <EditableText as="span" page="rooms" contentKey={`room_${room.id}_amenity_${i}`} defaultText={amenity} currentText={getText(`room_${room.id}_amenity_${i}`)} editMode={editMode} key={i} className="px-2.5 py-1 rounded-full bg-sage/10 text-[10px] font-mono font-medium text-earth/80" />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="pt-6 border-t border-earth/10 flex items-center justify-between gap-4">
-                    <div>
-                      <EditableText as="span" page="rooms" contentKey="rooms_starting_rate_lbl" defaultText="Starting Rate" currentText={getText('rooms_starting_rate_lbl')} editMode={editMode} className="text-xs text-earth/60 font-mono block" />
-                      <div className="text-2xl font-serif text-nanohana font-bold flex items-baseline gap-1">
-                        <EditableText as="span" page="rooms" contentKey={`room_${room.id}_price`} defaultText={room.price} currentText={getText(`room_${room.id}_price`)} editMode={editMode} />
-                        <EditableText as="span" page="rooms" contentKey="rooms_per_night" defaultText="/ night" currentText={getText('rooms_per_night')} editMode={editMode} className="text-xs text-earth/80 font-normal" />
+      <section id="room-listings" className="bg-cream text-earth">
+        {filteredRooms.length === 0 ? (
+          <div className="text-center py-32">
+            <p className="font-serif text-xl text-earth/70">No rooms match this active filter. See our full collection by tapping another tab.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <AnimatePresence>
+              {filteredRooms.map((room: any, index: number) => {
+                const isEven = index % 2 === 0;
+                return (
+                  <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} key={room.id} id={`room-${room.id}`} className="relative w-full border-b border-earth/10 last:border-b-0">
+                  <div className="flex flex-col md:flex-row min-h-screen">
+                    
+                    {/* Sticky Image Side */}
+                    <div className={`w-full md:w-1/2 h-[60vh] md:h-auto ${isEven ? 'md:order-1' : 'md:order-2'}`}>
+                      <div className="md:sticky md:top-0 md:h-screen w-full h-full overflow-hidden group">
+                        <Image 
+                          src={room.image} 
+                          alt={room.name} 
+                          fill 
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover transition-transform duration-1000 group-hover:scale-105" 
+                        />
+                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-all duration-500" />
+                        <button 
+                          onClick={() => openGallery(room)} 
+                          className="absolute bottom-8 right-8 bg-white/90 backdrop-blur-md text-earth px-6 py-3 rounded-none flex items-center gap-3 hover:bg-earth hover:text-white transition-all transform translate-y-0 opacity-100 md:translate-y-4 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 font-mono tracking-widest text-[10px] uppercase z-10"
+                        >
+                          <Camera className="w-4 h-4" /> View Gallery
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Link href="/reservations" className="px-6 py-2.5 rounded-full bg-nanohana text-earth font-sans text-xs font-semibold hover:bg-nanohana/90 transition-colors shadow-sm">Book now</Link>
+
+                    {/* Scrolling Content Side */}
+                    <div className={`w-full md:w-1/2 flex items-center py-24 px-8 md:px-16 lg:px-24 bg-cream ${isEven ? 'md:order-2' : 'md:order-1'}`}>
+                      <motion.div 
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-10%" }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className="w-full max-w-xl mx-auto space-y-12"
+                      >
+                        <div className="space-y-6">
+                          <div className="flex items-center gap-4">
+                            <EditableText as="span" page="rooms" contentKey={`room_${room.id}_category`} defaultText={room.category} currentText={getText(`room_${room.id}_category`)} editMode={editMode} className="text-[10px] font-mono uppercase tracking-[0.2em] text-earth/60" />
+                            {room.popular && (
+                              <span className="text-[10px] font-mono uppercase tracking-widest text-earth/80 flex items-center gap-1.5 border border-earth/20 px-2 py-1">
+                                <Award className="w-3 h-3" /> Signature
+                              </span>
+                            )}
+                          </div>
+                          <EditableText as="h3" page="rooms" contentKey={`room_${room.id}_name`} defaultText={room.name} currentText={getText(`room_${room.id}_name`)} editMode={editMode} className="font-serif text-4xl lg:text-5xl text-earth font-normal tracking-tight leading-tight" />
+                          <EditableText as="p" page="rooms" contentKey={`room_${room.id}_desc`} defaultText={room.desc} currentText={getText(`room_${room.id}_desc`)} editMode={editMode} className="text-earth/70 text-base leading-relaxed font-sans" />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-earth/10 text-sm text-earth/80">
+                          {room.features.map((feat: string, i: number) => (
+                            <div key={i} className={`flex items-start gap-3`}>
+                              <CheckCircle className="w-4 h-4 text-earth/30 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_feat_${i}`} defaultText={feat} currentText={getText(`room_${room.id}_feat_${i}`)} editMode={editMode} className="font-light" />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 pt-8">
+                          {room.amenities.map((amenity: string, i: number) => (
+                            <EditableText as="span" page="rooms" contentKey={`room_${room.id}_amenity_${i}`} defaultText={amenity} currentText={getText(`room_${room.id}_amenity_${i}`)} editMode={editMode} key={i} className="px-3 py-1.5 border border-earth/10 text-[10px] font-mono tracking-widest uppercase text-earth/60" />
+                          ))}
+                        </div>
+
+                        <div className="pt-12 mt-12 border-t border-earth/10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+                          <div>
+                            <EditableText as="span" page="rooms" contentKey="rooms_starting_rate_lbl" defaultText="Starting Rate" currentText={getText('rooms_starting_rate_lbl')} editMode={editMode} className="text-[10px] text-earth/50 font-mono tracking-widest uppercase block mb-2" />
+                            <div className="text-3xl font-serif text-earth font-normal flex items-baseline gap-2">
+                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_price`} defaultText={room.price} currentText={getText(`room_${room.id}_price`)} editMode={editMode} />
+                              <EditableText as="span" page="rooms" contentKey="rooms_per_night" defaultText="/ night" currentText={getText('rooms_per_night')} editMode={editMode} className="text-sm text-earth/50 font-sans" />
+                            </div>
+                          </div>
+                          <Link href="/reservations" className="px-10 py-4 bg-earth text-cream hover:bg-earth/90 transition-colors text-xs font-mono tracking-widest uppercase text-center w-full sm:w-auto">
+                            Reserve
+                          </Link>
+                        </div>
+                      </motion.div>
                     </div>
+
                   </div>
-                </div>
-                <div className="lg:col-span-5 relative min-h-[250px] lg:min-h-auto w-full group overflow-hidden">
-                  <Image src={room.image} alt={room.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 pointer-events-none" />
-                  <button 
-                    onClick={() => openGallery(room)} 
-                    className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md text-earth px-4 py-2.5 rounded-full flex items-center gap-2 shadow-lg hover:bg-nanohana hover:text-earth transition-all transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 font-semibold text-xs"
-                  >
-                    <Camera className="w-4 h-4" /> See all images
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                </motion.div>
+              );
+            })}
+            </AnimatePresence>
+          </div>
+        )}
       </section>
 
       <section id="room-policies" className="bg-cream py-16 border-t border-earth/5">

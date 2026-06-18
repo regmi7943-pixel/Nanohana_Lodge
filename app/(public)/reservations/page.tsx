@@ -1,5 +1,12 @@
 import ReservationsClient from './ReservationsClient';
 import { getAllContent } from '@/lib/content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Book Your Stay',
+  description: 'Book your stay at Nanohana Lodge in Lakeside Pokhara. View availability and reserve your room online.',
+};
+
 
 export const dynamic = 'force-dynamic';
 

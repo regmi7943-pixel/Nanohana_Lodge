@@ -16,7 +16,7 @@ interface EditableImageProps extends Omit<ImageProps, 'src'> {
   editMode: boolean;
 }
 
-export default function EditableImage({
+const EditableImage = ({
   page,
   contentKey,
   defaultSrc,
@@ -25,7 +25,7 @@ export default function EditableImage({
   className = '',
   alt,
   ...props
-}: EditableImageProps) {
+}: EditableImageProps) => {
   let defaultAspect: number | undefined = undefined;
   if (contentKey.includes('hero') || contentKey.includes('bg') || contentKey.includes('atmosphere') || contentKey.includes('carousel')) {
     defaultAspect = 16 / 9;
@@ -226,3 +226,4 @@ export default function EditableImage({
     </>
   );
 }
+export default React.memo(EditableImage);

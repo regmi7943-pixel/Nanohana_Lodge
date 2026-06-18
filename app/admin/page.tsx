@@ -10,6 +10,9 @@ import { defaultRooms } from '@/lib/defaultRooms';
 export default function AdminDashboard() {
   const [chartData, setChartData] = React.useState<any[]>([]);
   const [avgOccupancy, setAvgOccupancy] = React.useState(0);
+  const [arrivalsToday, setArrivalsToday] = React.useState(0);
+  const [departuresToday, setDeparturesToday] = React.useState(0);
+  const [pendingRequestsCount, setPendingRequestsCount] = React.useState(0);
 
   React.useEffect(() => {
     async function loadData() {
@@ -72,6 +75,22 @@ export default function AdminDashboard() {
 
       setChartData(last7Days);
       setAvgOccupancy(Math.round(totalOccupancySum / 7));
+
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      let arrCount = 0;
+      let depCount = 0;
+      let pendCount = 0;
+
+      requestsList.forEach(req => {
+        if (req.status === 'Pending') pendCount++;
+        if (req.status === 'Confirmed') {
+          if (req.checkIn === todayStr) arrCount++;
+          if (req.checkOut === todayStr) depCount++;
+        }
+      });
+      setArrivalsToday(arrCount);
+      setDeparturesToday(depCount);
+      setPendingRequestsCount(pendCount);
     }
     loadData();
   }, []);
@@ -108,6 +127,21 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-3xl font-serif font-bold text-white">Welcome back, Kul Bahadur</h1>
         <p className="text-cream/60 mt-2">Manage your lodge website assets and operations from this dashboard.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 flex flex-col justify-between">
+          <div className="text-cream/60 text-sm font-medium mb-2">Arrivals Today</div>
+          <div className="text-3xl font-serif text-white">{arrivalsToday}</div>
+        </div>
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 flex flex-col justify-between">
+          <div className="text-cream/60 text-sm font-medium mb-2">Departures Today</div>
+          <div className="text-3xl font-serif text-white">{departuresToday}</div>
+        </div>
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 flex flex-col justify-between">
+          <div className="text-cream/60 text-sm font-medium mb-2">Pending Requests</div>
+          <div className="text-3xl font-serif text-nanohana">{pendingRequestsCount}</div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

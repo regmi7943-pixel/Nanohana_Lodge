@@ -14,7 +14,7 @@ import {
 import EditableText from '@/components/EditableText';
 
 export default function GalleryClient({ content = [], editMode = false }: { content?: any[], editMode?: boolean }) {
-  const getText = (key: string) => content.find((c: any) => c.key === key)?.value;
+  const getText = React.useCallback((key: string) => content.find((c: any) => c.key === key)?.value, [content]);
 
   const [activeTab, setActiveTab] = useState('All');
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
@@ -120,6 +120,8 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
               src="https://picsum.photos/seed/annapurna/500/500"
               alt="Annapurna peaks backdrop"
               fill
+              priority={true}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className="object-cover"
             />
           </div>
@@ -128,6 +130,8 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
               src="https://picsum.photos/seed/nanohanagarden/500/500"
               alt="Rooftop blooming garden flowers"
               fill
+              priority={true}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className="object-cover"
             />
           </div>
@@ -136,6 +140,8 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
               src="https://picsum.photos/seed/nanohanastandard/500/500"
               alt="Lakeside Pokhara tidy bed"
               fill
+              priority={true}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className="object-cover"
             />
           </div>
@@ -144,6 +150,8 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
               src="https://picsum.photos/seed/sunrisepeak/500/500"
               alt="Sunset panoramic valleys"
               fill
+              priority={true}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className="object-cover"
             />
           </div>
@@ -192,6 +200,7 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
                   src={photo.image}
                   alt={photo.title}
                   fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover group-hover:scale-105 transition-all duration-300 opacity-90 group-hover:opacity-100"
                 />
 
@@ -273,6 +282,7 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
                 src={photos[selectedPhotoIndex].image}
                 alt={photos[selectedPhotoIndex].title}
                 fill
+                sizes="100vw"
                 className="object-contain"
               />
             </div>

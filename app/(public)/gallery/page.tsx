@@ -1,5 +1,12 @@
 import GalleryClient from './GalleryClient';
 import { getAllContent } from '@/lib/content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Gallery',
+  description: 'View photos of our beautiful eco-conscious guesthouse, garden, and mountain views at Nanohana Lodge.',
+};
+
 
 export const dynamic = 'force-dynamic';
 

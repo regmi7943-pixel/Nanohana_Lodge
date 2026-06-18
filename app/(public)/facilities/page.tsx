@@ -1,5 +1,12 @@
 import FacilitiesClient from './FacilitiesClient';
 import { getAllContent } from '@/lib/content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Facilities',
+  description: 'Enjoy our organic garden, rooftop terrace, and fast Wi-Fi. Discover the amenities at Nanohana Lodge.',
+};
+
 
 export const dynamic = 'force-dynamic';
 
