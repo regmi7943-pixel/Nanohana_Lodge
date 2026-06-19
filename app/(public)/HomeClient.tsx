@@ -84,6 +84,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
             defaultSrc="/hero-bg.png"
             currentSrc={getText('home_hero_bg')}
             editMode={editMode}
+            buttonClassName="top-[18%] right-8"
             alt="Nanohana Lodge Front View" 
             fill 
             priority 

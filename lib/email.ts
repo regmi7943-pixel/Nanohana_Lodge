@@ -1,8 +1,8 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const toEmail = process.env.NOTIFICATION_EMAIL || 'regmikiraneyyy@gmail.com';
-
+const rawNotificationEmail = process.env.NOTIFICATION_EMAIL || 'regmikiraneyyy@gmail.com';
+const toEmails = rawNotificationEmail.split(',').map(e => e.trim()).filter(Boolean);
 // Common CSS for email styling (Quiet Luxury theme)
 const emailStyles = `
   background-color: #fcfbf9;
@@ -158,7 +158,7 @@ export async function sendContactEmail(data: {
 
   return resend.emails.send({
     from: 'Nanohana Contact <info@nanohanalodge.com.np>',
-    to: [toEmail],
+    to: toEmails,
     subject,
     html: htmlContent,
   });
@@ -243,7 +243,7 @@ export async function sendBookingRequestEmail(data: {
 
   return resend.emails.send({
     from: 'Nanohana Bookings <info@nanohanalodge.com.np>',
-    to: [toEmail],
+    to: toEmails,
     subject,
     html: htmlContent,
   });
@@ -314,7 +314,7 @@ export async function sendBookingStatusEmail(req: {
   return resend.emails.send({
     from: 'Nanohana Lodge <info@nanohanalodge.com.np>',
     to: [req.email],
-    bcc: [toEmail],
+    bcc: toEmails,
     subject,
     html: finalHtml,
   });

@@ -14,7 +14,10 @@ interface EditableImageProps extends Omit<ImageProps, 'src'> {
   defaultSrc: string;
   currentSrc: string | undefined;
   editMode: boolean;
+  buttonClassName?: string;
 }
+
+import { createPortal } from 'react-dom';
 
 const EditableImage = ({
   page,
@@ -22,6 +25,7 @@ const EditableImage = ({
   defaultSrc,
   currentSrc,
   editMode,
+  buttonClassName,
   className = '',
   alt,
   ...props
@@ -118,7 +122,7 @@ const EditableImage = ({
   return (
     <>
       {/* CROP MODAL (Appears top level) */}
-      {imageSrc && (
+      {imageSrc && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
           <div className="bg-[#1a1f16] border border-white/10 w-full max-w-3xl h-[80vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl">
             {/* Modal Header */}
@@ -187,7 +191,8 @@ const EditableImage = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Mode Inline Display */}
@@ -200,7 +205,7 @@ const EditableImage = ({
         />
         
         {/* Upload button moved to top-right to avoid blocking text */}
-        <div className="absolute top-4 right-4 z-[60] pointer-events-none">
+        <div className={`absolute z-[60] pointer-events-none ${buttonClassName || 'top-4 right-4'}`}>
           <button
             onClick={(e) => {
               e.preventDefault();
