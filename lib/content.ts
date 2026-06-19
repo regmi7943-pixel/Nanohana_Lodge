@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export interface ContentItem {
   page: string;
@@ -9,6 +9,7 @@ export interface ContentItem {
 }
 
 export async function getContent(page: string): Promise<Record<string, string>> {
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from('site_content')
     .select('key, value')
@@ -19,6 +20,7 @@ export async function getContent(page: string): Promise<Record<string, string>> 
 }
 
 export async function getAllContent(): Promise<ContentItem[]> {
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from('site_content')
     .select('page, key, value')
