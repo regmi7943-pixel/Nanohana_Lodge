@@ -10,6 +10,7 @@ export const defaultRooms = [
     features: ['18 m² Area', 'Double or twin beds', '2 Adults, 1 Child', 'Attached private bathroom', 'Free stable WiFi', 'Electric kettle & Minibar'],
     amenities: ['Work desk', 'Ceiling fan', 'Minibar', 'Electric kettle', 'Free toiletries', 'Flat-screen TV', 'Daily housekeeping'],
     popular: false,
+    pricingConfig: [],
     gallery: [
       { url: 'https://picsum.photos/seed/std1/1000/667', category: 'Room' },
       { url: 'https://picsum.photos/seed/std2/1000/667', category: 'Room' },
@@ -28,6 +29,7 @@ export const defaultRooms = [
     features: ['19 m² Area', 'Double bed setup', '2 Adults', 'Ground-floor entrance', 'Attached hot shower', 'Garden view window'],
     amenities: ['Work desk', 'Ceiling fan', 'Minibar', 'Electric kettle', 'Slippers', 'Bath sheets', 'Daily housekeeping'],
     popular: false,
+    pricingConfig: [],
     gallery: [
       { url: 'https://picsum.photos/seed/gvn1/1000/667', category: 'Room' },
       { url: 'https://picsum.photos/seed/gvn2/1000/667', category: 'Washroom' },
@@ -46,6 +48,7 @@ export const defaultRooms = [
     features: ['24 m² Area', '1 King Bed', '2 Adults, 1 Child', 'Private balcony', 'Lakeside & Mountain vista', 'In-room deep bathtub'],
     amenities: ['Air conditioning', 'Private Balcony', 'Deep Bathtub', 'Seating area', 'Slippers & Bath sheets', 'Rainfall shower', 'Flat-screen TV'],
     popular: true,
+    pricingConfig: [],
     gallery: [
       { url: 'https://picsum.photos/seed/dlx1/1000/667', category: 'Room' },
       { url: 'https://picsum.photos/seed/dlx2/1000/667', category: 'Room' },
@@ -65,6 +68,7 @@ export const defaultRooms = [
     features: ['28 m² Area', '1 Double + 1 Single', '3 Adults', 'Extra luggage holds', 'Attached clean tile bathroom', 'Coffee garden access'],
     amenities: ['Ceiling fan', 'Coffee maker', 'Minibar', 'Work desk', 'Large bath sheets', 'Daily housekeeping', 'Room service'],
     popular: false,
+    pricingConfig: [],
     gallery: [
       { url: 'https://picsum.photos/seed/fam1/1000/667', category: 'Room' },
       { url: 'https://picsum.photos/seed/fam2/1000/667', category: 'Room' },

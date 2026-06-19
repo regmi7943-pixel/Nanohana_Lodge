@@ -1,5 +1,5 @@
 import ContactClient from './ContactClient';
-import { getAllContent } from '@/lib/content';
+import { getPageContent } from '@/lib/content';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export default async function ContactPage({ searchParams }: Props) {
-  const content = await getAllContent();
+  const content = await getPageContent('contact');
   const params = await searchParams;
   const editMode = params.editMode === 'true';
 

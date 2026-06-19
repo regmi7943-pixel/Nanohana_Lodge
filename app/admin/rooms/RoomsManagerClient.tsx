@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Bed, Plus, Trash2, Save, UploadCloud, X, Edit, Loader2, Star, CheckCircle, ChevronDown } from 'lucide-react';
+import { Bed, Plus, Trash2, Save, UploadCloud, X, Edit, Loader2, Star, CheckCircle, ChevronDown, Settings } from 'lucide-react';
 import { defaultRooms } from '@/lib/defaultRooms';
 import { updateContent } from '@/app/actions/updateContent';
 import { uploadImage } from '@/app/actions/uploadImage';
@@ -77,6 +77,7 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
     }
   });
   const [editingRoom, setEditingRoom] = useState<any | null>(null);
+  const [pricingRoom, setPricingRoom] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -155,6 +156,51 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
   const removeArrayItem = (field: 'features' | 'amenities', index: number) => {
     const newArray = editingRoom[field].filter((_: any, i: number) => i !== index);
     setEditingRoom({ ...editingRoom, [field]: newArray });
+  };
+
+  const handleOpenPricing = (room: any) => {
+    if (!room.pricingConfig || room.pricingConfig.length === 0) {
+      let defaultTiers = [];
+      if (room.category === 'Economy') {
+        defaultTiers = [
+          { label: '1 Adult', guests: 1, price: room.price },
+          { label: '2 Adults', guests: 2, price: room.price }
+        ];
+      } else {
+        defaultTiers = [
+          { label: '1 Adult', guests: 1, price: room.price },
+          { label: '2 Adults', guests: 2, price: room.price },
+          { label: '3 Adults / Family', guests: 3, price: room.price }
+        ];
+      }
+      setPricingRoom({ ...room, pricingConfig: defaultTiers });
+    } else {
+      setPricingRoom(room);
+    }
+  };
+
+  const handleAddPricingTier = () => {
+    const newTier = { guests: 1, label: '1 Adult', price: '$12' };
+    const newConfig = [...(pricingRoom.pricingConfig || []), newTier];
+    setPricingRoom({ ...pricingRoom, pricingConfig: newConfig });
+  };
+
+  const handleUpdatePricingTier = (index: number, field: string, value: any) => {
+    const newConfig = [...(pricingRoom.pricingConfig || [])];
+    newConfig[index] = { ...newConfig[index], [field]: value };
+    setPricingRoom({ ...pricingRoom, pricingConfig: newConfig });
+  };
+
+  const handleRemovePricingTier = (index: number) => {
+    const newConfig = pricingRoom.pricingConfig.filter((_: any, i: number) => i !== index);
+    setPricingRoom({ ...pricingRoom, pricingConfig: newConfig });
+  };
+
+  const handleSavePricing = () => {
+    const updated = rooms.map(r => r.id === pricingRoom.id ? pricingRoom : r);
+    saveToDb(updated);
+    setPricingRoom(null);
+    toast.success('Pricing saved successfully!');
   };
 
   return (
@@ -307,8 +353,18 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
               <motion.div key={room.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-nanohana/50 transition-all group">
                 <div className="relative h-48 w-full bg-black/40">
                   <Image src={room.image} alt={room.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                  
+                  {/* Settings Gear Icon in Top Right */}
+                  <button 
+                    onClick={() => handleOpenPricing(room)} 
+                    className="absolute z-10 top-3 right-3 p-2 bg-black/60 backdrop-blur-md hover:bg-nanohana text-white hover:text-earth rounded-full transition-all shadow-lg"
+                    title="Manage Dynamic Pricing"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+
                   {room.popular && (
-                    <div className="absolute top-3 right-3 bg-forest text-cream text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+                    <div className="absolute top-3 right-12 bg-forest text-cream text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
                       <Star className="w-3 h-3 fill-nanohana text-nanohana" /> Popular
                     </div>
                   )}
@@ -321,7 +377,7 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
                     <h3 className="font-serif text-xl font-bold text-white leading-tight">{room.name}</h3>
                     <div className="text-right flex-shrink-0">
                       <span className="text-sm font-mono text-white/50 block">From</span>
-                      <span className="font-bold text-nanohana">{room.price}</span>
+                      <span className="font-bold text-nanohana">{(room.pricingConfig && room.pricingConfig.length > 0) ? `$${Math.min(...room.pricingConfig.map((t: any) => parseInt(t.price.replace(/[^0-9.]/g, '')) || 0))}` : room.price}</span>
                     </div>
                   </div>
                   <p className="text-xs text-white/60 line-clamp-2 mb-6">{room.desc}</p>
@@ -340,6 +396,75 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
           </AnimatePresence>
         </div>
       )}
+
+      {/* Pricing Config Modal */}
+      <AnimatePresence>
+        {pricingRoom && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-2xl bg-[#1a1f16] border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+            >
+              <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-serif font-bold text-white">Dynamic Pricing</h3>
+                  <p className="text-cream/60 text-sm">Set prices based on traveller count for {pricingRoom.name}</p>
+                </div>
+                <button onClick={() => setPricingRoom(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/60">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-sm font-mono uppercase tracking-widest text-cream/70">Traveller Tiers</label>
+                    <button onClick={handleAddPricingTier} className="text-xs flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full transition-colors">
+                      <Plus className="w-3 h-3" /> Add Tier
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {(!pricingRoom.pricingConfig || pricingRoom.pricingConfig.length === 0) && (
+                      <p className="text-sm text-cream/40 text-center py-4">No dynamic pricing tiers set. The room will use the default base price.</p>
+                    )}
+                    {(pricingRoom.pricingConfig || []).map((tier: any, i: number) => (
+                      <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-black/40 p-3 rounded-xl border border-white/5">
+                        <div className="flex-1 w-full">
+                          <label className="text-[10px] uppercase text-cream/40 ml-1">Dropdown Label</label>
+                          <input type="text" value={tier.label} onChange={e => handleUpdatePricingTier(i, 'label', e.target.value)} placeholder="e.g. 1 Adult" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                        </div>
+                        <div className="w-28 flex-shrink-0">
+                          <label className="text-[10px] uppercase text-cream/40 ml-1" title="Used to calculate booking costs behind the scenes">Num Guests</label>
+                          <input type="number" value={tier.guests} onChange={e => handleUpdatePricingTier(i, 'guests', parseInt(e.target.value))} placeholder="1" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" title="Used to calculate booking costs behind the scenes" />
+                        </div>
+                        <div className="w-28 flex-shrink-0">
+                          <label className="text-[10px] uppercase text-cream/40 ml-1">Price</label>
+                          <input type="text" value={tier.price} onChange={e => handleUpdatePricingTier(i, 'price', e.target.value)} placeholder="$12" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana text-nanohana font-bold rounded-lg px-3 py-2 text-sm outline-none" />
+                        </div>
+                        <button onClick={() => handleRemovePricingTier(i)} className="mt-4 sm:mt-5 p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-white/10 bg-black/20 flex justify-end gap-3">
+                <button onClick={() => setPricingRoom(null)} className="px-6 py-2.5 rounded-xl font-bold text-white/70 hover:text-white hover:bg-white/5 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={handleSavePricing} disabled={isSaving} className="px-6 py-2.5 rounded-xl font-bold bg-nanohana text-earth hover:bg-nanohana/90 flex items-center gap-2 transition-all">
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save Pricing
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import ReservationsClient from './ReservationsClient';
-import { getAllContent } from '@/lib/content';
+import { getPageContent } from '@/lib/content';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export default async function ReservationsPage({ searchParams }: Props) {
-  const content = await getAllContent();
+  const content = await getPageContent('reservations');
   const params = await searchParams;
   const editMode = params.editMode === 'true';
 

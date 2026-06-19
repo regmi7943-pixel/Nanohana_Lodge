@@ -193,7 +193,17 @@ export default function ReservationsClient({ content = [], editMode = false }: {
   };
 
   const selectedRoomDetails = rooms.find((r: any) => r.id === selectedCatId);
-  const basePrice = selectedRoomDetails ? parseInt(selectedRoomDetails.price.replace('$', '')) : 12;
+  
+  const getDynamicPrice = () => {
+    if (!selectedRoomDetails) return 12;
+    if (selectedRoomDetails.pricingConfig && selectedRoomDetails.pricingConfig.length > 0) {
+      const match = selectedRoomDetails.pricingConfig.find((t: any) => t.guests === guestsCount);
+      if (match) return parseInt(match.price.replace(/[^0-9.]/g, ''));
+    }
+    return parseInt(selectedRoomDetails.price.replace(/[^0-9.]/g, '')) || 12;
+  };
+
+  const basePrice = getDynamicPrice();
 
   const getCalculatedPrice = () => {
     if (!checkInDate || !checkOutDate) return basePrice;
@@ -347,18 +357,25 @@ export default function ReservationsClient({ content = [], editMode = false }: {
           <div>
             <label htmlFor="roomsCount" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Rooms Requested</label>
             <select id="roomsCount" value={roomsCount} onChange={(e) => setRoomsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
-              <option value={1}>1 Room</option>
-              <option value={2}>2 Rooms</option>
-              <option value={3}>3 Rooms</option>
-              <option value={4}>4 Rooms</option>
+              {Array.from({ length: Math.max(1, bookingsData.inventory[selectedCatId] || 1) }).map((_, i) => (
+                <option key={i + 1} value={i + 1}>{i + 1} Room{i === 0 ? '' : 's'}</option>
+              ))}
             </select>
           </div>
           <div>
             <label htmlFor="guestsCount" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Travelers</label>
             <select id="guestsCount" value={guestsCount} onChange={(e) => setGuestsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
-              <option value={1}>1 Adult</option>
-              <option value={2}>2 Adults</option>
-              <option value={3}>3 Adults / Family</option>
+              {selectedRoomDetails?.pricingConfig && selectedRoomDetails.pricingConfig.length > 0 ? (
+                selectedRoomDetails.pricingConfig.map((tier: any, idx: number) => (
+                  <option key={`tier-${idx}`} value={tier.guests}>{tier.label} - {tier.price}</option>
+                ))
+              ) : (
+                <>
+                  <option value={1}>1 Adult</option>
+                  <option value={2}>2 Adults</option>
+                  <option value={3}>3 Adults / Family</option>
+                </>
+              )}
             </select>
           </div>
         </div>

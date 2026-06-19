@@ -1,5 +1,5 @@
 import HomeClient from './HomeClient';
-import { getAllContent } from '@/lib/content';
+import { getPageContent } from '@/lib/content';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +8,7 @@ type Props = {
 };
 
 export default async function HomePage({ searchParams }: Props) {
-  const content = await getAllContent();
+  const content = await getPageContent('home');
   const params = await searchParams;
   const editMode = params.editMode === 'true';
 

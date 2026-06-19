@@ -28,3 +28,15 @@ export async function getAllContent(): Promise<ContentItem[]> {
   if (error || !data) return [];
   return data;
 }
+
+// Fetch content for a specific page + global content (avoids key collisions across pages)
+export async function getPageContent(pageName: string): Promise<ContentItem[]> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from('site_content')
+    .select('page, key, value')
+    .in('page', [pageName, 'global'])
+    .order('page');
+  if (error || !data) return [];
+  return data;
+}

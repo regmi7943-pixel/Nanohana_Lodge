@@ -283,7 +283,7 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
                           <div>
                             <EditableText as="span" page="rooms" contentKey="rooms_starting_rate_lbl" defaultText="Starting Rate" currentText={getText('rooms_starting_rate_lbl')} editMode={editMode} className="text-[10px] text-earth/50 font-mono tracking-widest uppercase block mb-2" />
                             <div className="text-3xl font-serif text-earth font-normal flex items-baseline gap-2">
-                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_price`} defaultText={room.price} currentText={getText(`room_${room.id}_price`)} editMode={editMode} />
+                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_price`} defaultText={room.price} currentText={(room.pricingConfig && room.pricingConfig.length > 0) ? `$${Math.min(...room.pricingConfig.map((t: any) => parseInt(t.price.replace(/[^0-9.]/g, '')) || 0))}` : getText(`room_${room.id}_price`)} editMode={editMode} />
                               <EditableText as="span" page="rooms" contentKey="rooms_per_night" defaultText="/ night" currentText={getText('rooms_per_night')} editMode={editMode} className="text-sm text-earth/50 font-sans" />
                             </div>
                           </div>
