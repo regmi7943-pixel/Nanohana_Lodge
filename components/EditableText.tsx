@@ -25,6 +25,7 @@ const EditableText = ({
 }: EditableTextProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [initialValue, setInitialValue] = useState(currentText || defaultText);
   const contentRef = useRef<HTMLElement>(null);
   
   const displayValue = currentText || defaultText;
@@ -90,6 +91,7 @@ const EditableText = ({
         if (!isEditing) {
           e.preventDefault();
           e.stopPropagation();
+          setInitialValue(displayValue);
           setIsEditing(true);
         }
       }}
@@ -99,14 +101,9 @@ const EditableText = ({
         isEditing 
           ? 'outline-none ring-[1.5px] ring-nanohana ring-offset-[3px] ring-offset-[#1a1a2e] rounded-[3px] cursor-text bg-white/5 relative z-10' 
           : 'hover:outline-none hover:ring-[1.5px] hover:ring-nanohana/60 hover:ring-offset-[3px] hover:ring-offset-transparent hover:bg-white/5 hover:rounded-[3px] cursor-pointer transition-all duration-150'
-      } relative`}
+      } ${isSaving ? 'opacity-50 pointer-events-none' : ''} relative`}
+      dangerouslySetInnerHTML={{ __html: isEditing ? initialValue : displayValue }}
     >
-      {displayValue}
-      {isSaving && (
-        <span contentEditable={false} className="absolute -top-3 -right-3 w-5 h-5 bg-nanohana text-earth rounded-full flex items-center justify-center shadow-lg pointer-events-none z-20">
-          <Loader2 className="w-3 h-3 animate-spin" />
-        </span>
-      )}
     </Component>
   );
 }
