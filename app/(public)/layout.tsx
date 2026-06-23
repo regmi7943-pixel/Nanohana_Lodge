@@ -8,8 +8,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <>
       <Suspense fallback={null}>
         <CurtainLoader />
-      </Suspense>
-      <Suspense fallback={null}>
         <Navigation />
       </Suspense>
       {children}

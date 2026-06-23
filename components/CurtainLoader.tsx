@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 
 const CurtainLoader = () => {
@@ -39,10 +38,11 @@ const CurtainLoader = () => {
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none flex">
       {/* Left Curtain Panel */}
-      <motion.div
-        initial={{ x: 0 }}
-        animate={{ x: isOpening ? '-100%' : 0 }}
-        transition={{ duration: 1.5, ease: [0.76, 0, 0.24, 1] }}
+      <div
+        style={{
+          transform: isOpening ? 'translateX(-100%)' : 'translateX(0)',
+          transition: 'transform 1.5s cubic-bezier(0.76, 0, 0.24, 1)',
+        }}
         className="w-1/2 h-full relative overflow-hidden bg-black shadow-[10px_0_20px_rgba(0,0,0,0.5)] z-10"
       >
         <Image
@@ -54,13 +54,14 @@ const CurtainLoader = () => {
           className="object-cover"
           style={{ objectPosition: 'left center' }}
         />
-      </motion.div>
+      </div>
 
       {/* Right Curtain Panel */}
-      <motion.div
-        initial={{ x: 0 }}
-        animate={{ x: isOpening ? '100%' : 0 }}
-        transition={{ duration: 1.5, ease: [0.76, 0, 0.24, 1] }}
+      <div
+        style={{
+          transform: isOpening ? 'translateX(100%)' : 'translateX(0)',
+          transition: 'transform 1.5s cubic-bezier(0.76, 0, 0.24, 1)',
+        }}
         className="w-1/2 h-full relative overflow-hidden bg-black shadow-[-10px_0_20px_rgba(0,0,0,0.5)] z-10"
       >
         <Image
@@ -72,8 +73,9 @@ const CurtainLoader = () => {
           className="object-cover"
           style={{ objectPosition: 'right center' }}
         />
-      </motion.div>
+      </div>
     </div>
   );
 }
 export default React.memo(CurtainLoader);
+
