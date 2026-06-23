@@ -84,6 +84,7 @@ export default function AboutClient({ content = [], editMode = false }: { conten
               editMode={editMode}
               alt="Railway tracks heading to the mountains"
               fill
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
             />
           </div>
@@ -306,6 +307,7 @@ export default function AboutClient({ content = [], editMode = false }: { conten
                   editMode={editMode}
                   alt="Kul Bahadur Acharya"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                   style={{ objectPosition: 'center 20%' }}
                   referrerPolicy="no-referrer"
@@ -353,11 +355,12 @@ export default function AboutClient({ content = [], editMode = false }: { conten
                 <EditableImage
                   page="about"
                   contentKey="about_team2_img"
-                  defaultSrc="https://picsum.photos/seed/nepalihost2/500/500"
+                  defaultSrc="/story_home.jpg"
                   currentSrc={getText('about_team2_img')}
                   editMode={editMode}
                   alt="Kishor"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                   style={{ objectPosition: 'center 20%' }}
                   referrerPolicy="no-referrer"
@@ -405,11 +408,12 @@ export default function AboutClient({ content = [], editMode = false }: { conten
                 <EditableImage
                   page="about"
                   contentKey="about_team3_img"
-                  defaultSrc="https://picsum.photos/seed/nepalihost3/500/500"
+                  defaultSrc="/story_home.jpg"
                   currentSrc={getText('about_team3_img')}
                   editMode={editMode}
                   alt="Rabin"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                   style={{ objectPosition: 'center 20%' }}
                   referrerPolicy="no-referrer"

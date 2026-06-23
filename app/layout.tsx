@@ -1,7 +1,7 @@
 import type {Metadata} from 'next';
 import { Josefin_Sans, Lato } from 'next/font/google';
 import './globals.css'; // Global styles
-
+import { Toaster } from 'react-hot-toast';
 const josefin = Josefin_Sans({
   subsets: ['latin'],
   variable: '--font-serif',
@@ -28,10 +28,10 @@ export const metadata: Metadata = {
     siteName: 'Nanohana Lodge',
     images: [
       {
-        url: '/logo_nanohana.png', // Fallback image
-        width: 800,
-        height: 600,
-        alt: 'Nanohana Lodge Logo',
+        url: '/story_home.jpg', // Fallback image
+        width: 1200,
+        height: 800,
+        alt: 'Nanohana Lodge',
       },
     ],
     locale: 'en_US',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Nanohana Lodge | Garden Oasis Guesthouse',
     description: 'Clean, cozy, eco-conscious guesthouse with mountain views from $12/night. Family-run in Lakeside Pokhara.',
-    images: ['/logo_nanohana.png'],
+    images: ['/story_home.jpg'],
   },
   robots: {
     index: true,
@@ -65,6 +65,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={`${josefin.variable} ${lato.variable}`}>
       <body className="bg-cream text-earth font-sans font-light min-h-screen flex flex-col antialiased" suppressHydrationWarning>
+        <Toaster position="top-center" toastOptions={{ className: 'bg-forest text-cream font-sans border border-white/10' }} />
         <SecretKeybind />
         <main className="flex-grow">{children}</main>
       </body>

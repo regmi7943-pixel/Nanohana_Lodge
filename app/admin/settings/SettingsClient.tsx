@@ -46,12 +46,17 @@ export default function SettingsClient({ content = [] }: { content?: any[] }) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await Promise.all(
+      const results = await Promise.all(
         Object.entries(settings).map(([key, value]) =>
           updateContent('global', key, value)
         )
       );
-      toast.success('Settings saved successfully!');
+      const hasError = results.some(r => r?.error);
+      if (hasError) {
+        toast.error('Failed to save some settings.');
+      } else {
+        toast.success('Settings saved successfully!');
+      }
     } catch (error) {
       toast.error('Failed to save settings.');
     } finally {

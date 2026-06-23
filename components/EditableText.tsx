@@ -49,8 +49,8 @@ const EditableText = ({
   const handleSave = async () => {
     if (!contentRef.current) return;
     
-    // Use innerText to preserve line breaks
-    const newValue = contentRef.current.innerText || contentRef.current.textContent || '';
+    // Use innerHTML to preserve HTML formatting and line breaks (<br>)
+    const newValue = contentRef.current.innerHTML || '';
     
     if (newValue.trim() === displayValue.trim()) {
       setIsEditing(false);

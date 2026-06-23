@@ -25,8 +25,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.push('/12312341');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        router.push('/12312341');
+      }
     });
 
     return () => subscription.unsubscribe();

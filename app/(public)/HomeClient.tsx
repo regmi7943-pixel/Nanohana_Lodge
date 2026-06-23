@@ -98,7 +98,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
-          className="relative z-10 text-center px-5 max-w-[850px] mx-auto text-cream mt-16"
+          className="relative z-10 text-center px-5 max-w-[850px] mx-auto text-cream"
         >
           <EditableText as="p" page="home" contentKey="hero_eyebrow" defaultText="Pokhara · Nepal · Est. 1990" currentText={getText('hero_eyebrow')} editMode={editMode} className="text-cream/80 text-[10px] sm:text-[11px] font-mono tracking-[0.3em] uppercase mb-6 block" />
 
@@ -220,7 +220,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
                   transition={{ duration: 1, delay: 0.2 }}
                   className="absolute top-0 right-0 w-[65%] h-[70%] z-0"
                 >
-                  <EditableImage page="home" contentKey="home_story_1" defaultSrc="/story_home.jpg" currentSrc={getText('home_story_1')} editMode={editMode} alt="Nanohana Lodge Story" fill className="object-cover" />
+                  <EditableImage page="home" contentKey="home_story_1" defaultSrc="/story_home.jpg" currentSrc={getText('home_story_1')} editMode={editMode} alt="Nanohana Lodge Story" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                 </motion.div>
                 
                 <motion.div 
@@ -230,7 +230,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
                   transition={{ duration: 1, delay: 0.4 }}
                   className="absolute bottom-10 left-0 w-[55%] h-[55%] z-20"
                 >
-                  <EditableImage page="home" contentKey="home_story_2" defaultSrc="/story_home2.jpg" currentSrc={getText('home_story_2')} editMode={editMode} alt="Nanohana Lodge Garden" fill className="object-cover" />
+                  <EditableImage page="home" contentKey="home_story_2" defaultSrc="/story_home2.jpg" currentSrc={getText('home_story_2')} editMode={editMode} alt="Nanohana Lodge Garden" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                   
                   {/* Overlapping Text Box */}
                   <div className="absolute -bottom-10 -right-10 bg-cream p-8 w-72 shadow-xl z-30 border border-earth/5">
@@ -241,7 +241,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
 
               {/* Mobile Hero Image */}
               <div className="block md:hidden absolute inset-0 z-10">
-                <EditableImage page="home" contentKey="home_story_hero" defaultSrc="/story_hero.jpg" currentSrc={getText('home_story_hero')} editMode={editMode} alt="Nanohana Lodge Hero" fill className="object-cover" />
+                <EditableImage page="home" contentKey="home_story_hero" defaultSrc="/story_hero.jpg" currentSrc={getText('home_story_hero')} editMode={editMode} alt="Nanohana Lodge Hero" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                 <div className="absolute -bottom-6 left-4 right-4 bg-cream p-6 shadow-xl z-30 border border-earth/5">
                   <EditableText as="p" page="home" contentKey="founding_quote" defaultText={`"17 rooms. Three storeys. One peaceful rooftop with a view of the Annapurna range that guests say they will never forget."`} currentText={getText('founding_quote')} editMode={editMode} className="text-earth text-sm font-serif italic" />
                 </div>
@@ -296,11 +296,12 @@ export default function HomeClient({ content = [], editMode = false }: { content
                 <EditableImage 
                   page="home" 
                   contentKey="home_receptionist_img" 
-                  defaultSrc="https://picsum.photos/seed/receptionist/600/800" 
+                  defaultSrc="/story_home.jpg" 
                   currentSrc={getText('home_receptionist_img')} 
                   editMode={editMode} 
                   alt="Nanohana Lodge Receptionist" 
-                  fill 
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover" 
                 />
               </motion.div>
@@ -401,7 +402,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
               </div>
             </div>
             <div className="lg:col-span-7 relative min-h-[300px] sm:min-h-[500px] lg:min-h-full w-full">
-              <EditableImage page="home" contentKey={`home_room_carousel_${roomsData[activeCarouselIndex].id}`} defaultSrc={roomsData[activeCarouselIndex].image} currentSrc={getText(`home_room_carousel_${roomsData[activeCarouselIndex].id}`)} editMode={editMode} alt={roomsData[activeCarouselIndex].name} fill className="object-cover" referrerPolicy="no-referrer" />
+              <EditableImage page="home" contentKey={`home_room_carousel_${roomsData[activeCarouselIndex].id}`} defaultSrc={roomsData[activeCarouselIndex].image} currentSrc={getText(`home_room_carousel_${roomsData[activeCarouselIndex].id}`)} editMode={editMode} alt={roomsData[activeCarouselIndex].name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" referrerPolicy="no-referrer" />
             </div>
           </div>
           )}
@@ -437,7 +438,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
               viewport={{ once: true }}
               className="md:col-span-2 md:row-span-2 relative group overflow-hidden bg-forest h-[400px] md:h-auto"
             >
-              <EditableImage page="home" contentKey="home_atmosphere_bg" defaultSrc="https://picsum.photos/seed/nepaltravel/1600/900" currentSrc={getText('home_atmosphere_bg')} editMode={editMode} alt="Atmosphere Pokhara landscape" fill className="object-cover transition-transform duration-[2s] group-hover:scale-105" referrerPolicy="no-referrer" />
+              <EditableImage page="home" contentKey="home_atmosphere_bg" defaultSrc="/story_home.jpg" currentSrc={getText('home_atmosphere_bg')} editMode={editMode} alt="Atmosphere Pokhara landscape" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-[2s] group-hover:scale-105" referrerPolicy="no-referrer" />
               <div className="absolute inset-0 bg-black/20 transition-colors duration-500 group-hover:bg-black/40" />
               <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-end">
                 <EditableText as="h2" page="home" contentKey="walkthrough_title" defaultText="Explore Nanohana Lodge" currentText={getText('walkthrough_title')} editMode={editMode} className="font-serif text-3xl md:text-4xl font-light text-cream mb-6 drop-shadow-md" />

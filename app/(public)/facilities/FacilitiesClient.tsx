@@ -87,7 +87,7 @@ export default function FacilitiesClient({ content = [], editMode = false }: { c
         <EditableImage
           page="facilities"
           contentKey="facilities_hero_bg"
-          defaultSrc="https://picsum.photos/seed/nanohanagarden/1600/900"
+          defaultSrc="/story_home.jpg"
           currentSrc={getText('facilities_hero_bg')}
           editMode={editMode}
           alt="Rooftop garden view at Nanohana"

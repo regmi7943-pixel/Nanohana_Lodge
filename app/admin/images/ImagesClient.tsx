@@ -5,6 +5,7 @@ import { UploadCloud, Image as ImageIcon, Link2, Check, Loader2, X, Trash2, Imag
 import { motion, AnimatePresence } from 'framer-motion';
 import { uploadImage, getUploadedImages } from '@/app/actions/uploadImage';
 import { updateContent } from '@/app/actions/updateContent';
+import { Pencil } from 'lucide-react';
 
 interface CloudinaryImage {
   name: string;
@@ -45,6 +46,16 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
   const [selectedRoom, setSelectedRoom] = useState(DB_ROOMS[0]?.id || 'room-1');
   const [selectedRoomCategory, setSelectedRoomCategory] = useState(ROOM_CATEGORIES[0]);
 
+  // Editing State
+  const [editingImage, setEditingImage] = useState<any>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+
+  // Upload Dialog State
+  const [pendingFiles, setPendingFiles] = useState<File[] | null>(null);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadDesc, setUploadDesc] = useState('');
+
   // --- MAIN GALLERY LOGIC ---
   const getPublicGallery = () => {
     const raw = content.find((c: any) => c.key === 'global_gallery_photos')?.value;
@@ -54,14 +65,21 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
     return [];
   };
 
-  const handleMainGalleryUpload = async (files: FileList | null) => {
+  const handleMainGallerySelection = (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    setUploadTitle(`New ${selectedMainCategory} Photo`);
+    setUploadDesc(`A beautiful photo of our ${selectedMainCategory.toLowerCase()}.`);
+    setPendingFiles(Array.from(files));
+  };
+
+  const confirmMainGalleryUpload = async () => {
+    if (!pendingFiles || pendingFiles.length === 0) return;
     setIsUploading(true);
     setUploadError('');
 
     const newGallery = [...getPublicGallery()];
     
-    for (const file of Array.from(files)) {
+    for (const file of pendingFiles) {
       const formData = new FormData();
       formData.append('file', file);
       const result = await uploadImage(formData);
@@ -70,8 +88,8 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
           id: Date.now() + Math.floor(Math.random() * 1000),
           url: result.url, 
           category: selectedMainCategory,
-          title: `New ${selectedMainCategory} Photo`,
-          desc: `A beautiful photo of our ${selectedMainCategory.toLowerCase()}.`
+          title: uploadTitle,
+          desc: uploadDesc
         });
       } else {
         setUploadError(result.error || 'Upload failed');
@@ -79,15 +97,30 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
     }
 
     await updateContent('global', 'global_gallery_photos', JSON.stringify(newGallery));
+    setPendingFiles(null);
     window.location.reload(); 
     setIsUploading(false);
   };
+
 
   const removeMainImage = async (imgId: number) => {
     setIsUploading(true);
     const current = getPublicGallery();
     const newGallery = current.filter((img: any) => img.id !== imgId);
     await updateContent('global', 'global_gallery_photos', JSON.stringify(newGallery));
+    window.location.reload();
+  };
+
+  const saveMainImageDetails = async () => {
+    setIsUploading(true);
+    const current = getPublicGallery();
+    const newGallery = current.map((img: any) => 
+      img.id === editingImage.id 
+        ? { ...img, title: editTitle, desc: editDesc } 
+        : img
+    );
+    await updateContent('global', 'global_gallery_photos', JSON.stringify(newGallery));
+    setEditingImage(null);
     window.location.reload();
   };
 
@@ -198,7 +231,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                   <div
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={(e) => { e.preventDefault(); setDragOver(false); handleMainGalleryUpload(e.dataTransfer.files); }}
+                    onDrop={(e) => { e.preventDefault(); setDragOver(false); handleMainGallerySelection(e.dataTransfer.files); }}
                     onClick={() => fileInputRef.current?.click()}
                     className={`border-2 border-dashed rounded-xl p-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4 cursor-pointer transition-all ${
                       dragOver ? 'border-phewa bg-phewa/10' : 'border-white/10 bg-black/20 hover:bg-black/40 hover:border-white/30'
@@ -210,7 +243,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                       accept="image/*"
                       multiple
                       className="hidden"
-                      onChange={(e) => handleMainGalleryUpload(e.target.files)}
+                      onChange={(e) => handleMainGallerySelection(e.target.files)}
                     />
                     <div className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${dragOver ? 'bg-phewa text-cream scale-110' : 'bg-white/10 text-cream'}`}>
                       {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
@@ -229,7 +262,19 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                       {currentMainGallery.map((img: any) => (
                         <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border border-white/10 bg-black/40">
                           <img src={img.url} alt="Gallery image" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                            <button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setEditingImage({ ...img, type: 'main' });
+                                setEditTitle(img.title || '');
+                                setEditDesc(img.desc || '');
+                              }}
+                              className="p-3 bg-nanohana hover:bg-nanohana/80 text-earth rounded-full shadow-lg transition-transform transform scale-90 group-hover:scale-100"
+                              title="Edit details"
+                            >
+                              <Pencil className="w-5 h-5" />
+                            </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); removeMainImage(img.id); }}
                               className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-transform transform scale-90 group-hover:scale-100"
@@ -358,6 +403,148 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Image Details Edit Modal */}
+      <AnimatePresence>
+        {editingImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-earth border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-serif text-white">Edit Image Details</h3>
+                <button onClick={() => setEditingImage(null)} className="text-cream/50 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-widest text-cream/50 mb-2">Title</label>
+                  <input 
+                    type="text" 
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-cream focus:outline-none focus:border-nanohana transition-colors"
+                    placeholder="E.g., Annapurna range from rooftop"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-widest text-cream/50 mb-2">Description</label>
+                  <textarea 
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-cream focus:outline-none focus:border-nanohana transition-colors min-h-[100px] resize-none"
+                    placeholder="E.g., The sweeping, unobstructed panorama visible from our communal deck at 6:15 AM."
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button 
+                  onClick={() => setEditingImage(null)}
+                  className="px-5 py-2.5 rounded-full text-sm font-semibold text-cream/70 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    if (editingImage.type === 'main') {
+                      saveMainImageDetails();
+                    }
+                  }}
+                  disabled={isUploading}
+                  className="px-6 py-2.5 rounded-full text-sm font-semibold bg-nanohana text-earth hover:bg-nanohana/90 shadow-lg transition-all flex items-center gap-2"
+                >
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  Save Details
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Upload Details Modal */}
+      <AnimatePresence>
+        {pendingFiles && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-earth border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-serif text-white">Set Details for Upload</h3>
+                <button onClick={() => setPendingFiles(null)} className="text-cream/50 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="bg-black/20 border border-white/5 rounded-xl p-4 mb-6 flex items-center gap-4">
+                <div className="bg-white/10 w-12 h-12 rounded-lg flex items-center justify-center text-white">
+                  <Images className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-white font-medium">{pendingFiles.length} file{pendingFiles.length !== 1 && 's'} selected</p>
+                  <p className="text-xs text-cream/50">Category: {selectedMainCategory}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-widest text-cream/50 mb-2">Title</label>
+                  <input 
+                    type="text" 
+                    value={uploadTitle}
+                    onChange={(e) => setUploadTitle(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-cream focus:outline-none focus:border-nanohana transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-widest text-cream/50 mb-2">Description</label>
+                  <textarea 
+                    value={uploadDesc}
+                    onChange={(e) => setUploadDesc(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-cream focus:outline-none focus:border-nanohana transition-colors min-h-[100px] resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button 
+                  onClick={() => setPendingFiles(null)}
+                  className="px-5 py-2.5 rounded-full text-sm font-semibold text-cream/70 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmMainGalleryUpload}
+                  disabled={isUploading}
+                  className="px-6 py-2.5 rounded-full text-sm font-semibold bg-nanohana text-earth hover:bg-nanohana/90 shadow-lg transition-all flex items-center gap-2"
+                >
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                  Confirm Upload
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

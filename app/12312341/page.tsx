@@ -18,7 +18,11 @@ export default function SecretLoginPage() {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const form = e.target as HTMLFormElement;
+    const emailVal = (form.elements.namedItem('email') as HTMLInputElement).value;
+    const passwordVal = (form.elements.namedItem('password') as HTMLInputElement).value;
+
+    const { error } = await supabase.auth.signInWithPassword({ email: emailVal, password: passwordVal });
 
     if (error) {
       setError('Incorrect email or password.');
@@ -51,10 +55,12 @@ export default function SecretLoginPage() {
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cream/40" />
             <input
               type="email"
+              name="email"
               placeholder="Email address..."
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="w-full pl-10 pr-4 py-3 bg-earth/50 border border-white/20 rounded-xl text-cream focus:outline-none focus:border-nanohana focus:ring-1 focus:ring-nanohana transition-all"
             />
           </div>
@@ -62,10 +68,12 @@ export default function SecretLoginPage() {
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cream/40" />
             <input
               type="password"
+              name="password"
               placeholder="Password..."
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
               className="w-full pl-10 pr-4 py-3 bg-earth/50 border border-white/20 rounded-xl text-cream focus:outline-none focus:border-nanohana focus:ring-1 focus:ring-nanohana transition-all"
             />
           </div>

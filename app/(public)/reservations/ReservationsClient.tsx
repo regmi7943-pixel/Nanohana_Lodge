@@ -339,7 +339,7 @@ export default function ReservationsClient({ content = [], editMode = false }: {
     </div>
   );
 
-  const renderOptions = (isMobile: boolean) => (
+  const renderOptions = (isMobile: boolean, idPrefix: string = '') => (
     <div className={`space-y-5 ${isMobile ? 'bg-white border border-earth/10 rounded-2xl p-4 shadow-sm' : 'h-full flex flex-col justify-between'}`}>
       {isMobile && (
         <button onClick={() => goToStep('calendar', -1)} className="text-xs text-earth/60 hover:text-earth mb-2 flex items-center gap-1 transition-colors">
@@ -349,22 +349,22 @@ export default function ReservationsClient({ content = [], editMode = false }: {
       <div className="space-y-5 flex-grow">
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label htmlFor="selectedCatId" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Choose Your Room</label>
-            <select id="selectedCatId" value={selectedCatId} onChange={(e) => setSelectedCatId(e.target.value)} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
+            <label htmlFor={`${idPrefix}selectedCatId`} className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Choose Your Room</label>
+            <select id={`${idPrefix}selectedCatId`} value={selectedCatId} onChange={(e) => setSelectedCatId(e.target.value)} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
               {rooms.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
           </div>
           <div>
-            <label htmlFor="roomsCount" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Rooms Requested</label>
-            <select id="roomsCount" value={roomsCount} onChange={(e) => setRoomsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
+            <label htmlFor={`${idPrefix}roomsCount`} className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Rooms Requested</label>
+            <select id={`${idPrefix}roomsCount`} value={roomsCount} onChange={(e) => setRoomsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
               {Array.from({ length: Math.max(1, bookingsData.inventory[selectedCatId] || 1) }).map((_, i) => (
                 <option key={i + 1} value={i + 1}>{i + 1} Room{i === 0 ? '' : 's'}</option>
               ))}
             </select>
           </div>
           <div>
-            <label htmlFor="guestsCount" className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Travelers</label>
-            <select id="guestsCount" value={guestsCount} onChange={(e) => setGuestsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
+            <label htmlFor={`${idPrefix}guestsCount`} className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Travelers</label>
+            <select id={`${idPrefix}guestsCount`} value={guestsCount} onChange={(e) => setGuestsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
               {selectedRoomDetails?.pricingConfig && selectedRoomDetails.pricingConfig.length > 0 ? (
                 selectedRoomDetails.pricingConfig.map((tier: any, idx: number) => (
                   <option key={`tier-${idx}`} value={tier.guests}>{tier.label} - {tier.price}</option>
@@ -523,7 +523,7 @@ export default function ReservationsClient({ content = [], editMode = false }: {
     <div id="reservations-page" className="w-full">
       {/* SUB-HERO SECTION */}
       <section id="reservations-hero" className="relative bg-forest py-24 text-center border-b border-white/5 overflow-hidden">
-        <EditableImage page="reservations" contentKey="reservations_hero_bg" defaultSrc="https://picsum.photos/seed/reservationhero/1600/900" currentSrc={getText('reservations_hero_bg')} editMode={editMode} alt="Lodge exterior" fill priority sizes="100vw" className="object-cover opacity-20" referrerPolicy="no-referrer" />
+        <EditableImage page="reservations" contentKey="reservations_hero_bg" defaultSrc="/story_home.jpg" currentSrc={getText('reservations_hero_bg')} editMode={editMode} alt="Lodge exterior" fill priority sizes="100vw" className="object-cover opacity-20" referrerPolicy="no-referrer" />
         <div className="relative z-10 max-w-[800px] mx-auto px-5 space-y-4 pt-12 text-cream">
           <EditableText as="span" page="reservations" contentKey="reservations_hero_subtitle" defaultText={`Official Booking Portal`} currentText={getText('reservations_hero_subtitle')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-nanohana font-bold block" />
           <EditableText as="h1" page="reservations" contentKey="reservations_hero_title" defaultText={`Book direct. Best rate guaranteed.`} currentText={getText('reservations_hero_title')} editMode={editMode} className="font-serif text-4xl sm:text-5xl font-medium tracking-tight" />
@@ -549,7 +549,7 @@ export default function ReservationsClient({ content = [], editMode = false }: {
                 )}
                 {bookingStep === 'options' && (
                   <motion.div key="options" custom={direction} variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3, ease: "easeInOut" }} className="w-full">
-                    {renderOptions(true)}
+                    {renderOptions(true, 'mobile-')}
                   </motion.div>
                 )}
                 {bookingStep === 'details' && (
@@ -573,10 +573,10 @@ export default function ReservationsClient({ content = [], editMode = false }: {
               <div className="h-full">
                 {bookingStep === 'calendar' && (
                   <div className="transition-opacity duration-300 opacity-100">
-                    {renderOptions(false)}
+                    {renderOptions(false, 'desktop-')}
                   </div>
                 )}
-                {bookingStep === 'options' && renderOptions(false)}
+                {bookingStep === 'options' && renderOptions(false, 'desktop-')}
                 {bookingStep === 'details' && renderDetails(false)}
                 {bookingStep === 'success' && renderSuccess(false)}
               </div>

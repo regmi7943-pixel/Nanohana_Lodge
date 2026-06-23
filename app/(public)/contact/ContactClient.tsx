@@ -62,7 +62,7 @@ export default function ContactClient({ content = [], editMode = false }: { cont
   return (
     <div id="contact-page" className="w-full">
       <section id="contact-hero" className="relative h-[55vh] min-h-[380px] w-full flex items-center justify-center">
-        <EditableImage page="contact" contentKey="contact_hero_bg" defaultSrc="https://picsum.photos/seed/teafresh/1600/900" currentSrc={getText('contact_hero_bg')} editMode={editMode} alt="Lodge garden entrance" fill priority sizes="100vw" className="object-cover" referrerPolicy="no-referrer" />
+        <EditableImage page="contact" contentKey="contact_hero_bg" defaultSrc="/story_home.jpg" currentSrc={getText('contact_hero_bg')} editMode={editMode} alt="Lodge garden entrance" fill priority sizes="100vw" className="object-cover" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-forest/50 mix-blend-multiply pointer-events-none" />
         <div className="relative z-10 text-center px-5 text-cream max-w-[800px] pt-16">
           <EditableText as="span" page="contact" contentKey="contact_hero_eyebrow" defaultText="Contact & Location" currentText={getText('contact_hero_eyebrow')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-cream/70 block mb-2" />

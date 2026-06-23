@@ -183,7 +183,7 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
       </AnimatePresence>
 
       <section id="rooms-hero" className="relative h-[55vh] min-h-[380px] w-full flex items-center justify-center">
-        <EditableImage page="rooms" contentKey="rooms_hero_bg" defaultSrc="https://picsum.photos/seed/nanohanadeluxe/1600/900" currentSrc={getText('rooms_hero_bg')} editMode={editMode} alt="Mountain view from terrace" fill priority sizes="100vw" className="object-cover" referrerPolicy="no-referrer" />
+        <EditableImage page="rooms" contentKey="rooms_hero_bg" defaultSrc="/story_home.jpg" currentSrc={getText('rooms_hero_bg')} editMode={editMode} alt="Mountain view from terrace" fill priority sizes="100vw" className="object-cover" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-forest/50 mix-blend-multiply pointer-events-none" />
         <div className="relative z-10 text-center px-5 text-cream max-w-[800px] pt-16">
           <EditableText as="span" page="rooms" contentKey="rooms_hero_eyebrow" defaultText="Rooms & Suites" currentText={getText('rooms_hero_eyebrow')} editMode={editMode} className="text-xs font-mono uppercase tracking-[0.2em] text-cream/70 block mb-2" />
@@ -214,92 +214,197 @@ export default function RoomsClient({ content = [], editMode = false }: { conten
             <p className="font-serif text-xl text-earth/70">No rooms match this active filter. See our full collection by tapping another tab.</p>
           </div>
         ) : (
-          <div className="flex flex-col">
-            <AnimatePresence>
-              {filteredRooms.map((room: any, index: number) => {
-                const isEven = index % 2 === 0;
-                return (
-                  <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} key={room.id} id={`room-${room.id}`} className="relative w-full border-b border-earth/10 last:border-b-0">
-                  <div className="flex flex-col md:flex-row min-h-screen">
-                    
-                    {/* Sticky Image Side */}
-                    <div className={`w-full md:w-1/2 h-[60vh] md:h-auto ${isEven ? 'md:order-1' : 'md:order-2'}`}>
-                      <div className="md:sticky md:top-0 md:h-screen w-full h-full overflow-hidden group">
-                        <Image 
-                          src={room.image} 
-                          alt={room.name} 
-                          fill 
-                          sizes="(max-width: 768px) 100vw, 50vw"
-                          className="object-cover transition-transform duration-1000 group-hover:scale-105" 
-                        />
-                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-all duration-500" />
-                        <button 
-                          onClick={() => openGallery(room)} 
-                          className="absolute bottom-8 right-8 bg-white/90 backdrop-blur-md text-earth px-6 py-3 rounded-none flex items-center gap-3 hover:bg-earth hover:text-white transition-all transform translate-y-0 opacity-100 md:translate-y-4 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 font-mono tracking-widest text-[10px] uppercase z-10"
+          <>
+            {/* ===== MOBILE: Horizontal Swipeable Card Slider ===== */}
+            <div className="md:hidden py-8 px-4">
+              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4 -mx-4 px-4">
+                {filteredRooms.map((room: any) => (
+                  <div
+                    key={room.id}
+                    className="snap-center shrink-0 w-[85vw] max-w-[360px] bg-white border border-earth/10 rounded-2xl overflow-hidden shadow-sm"
+                  >
+                    {/* Card Image */}
+                    <div className="relative h-[240px] w-full overflow-hidden group">
+                      <Image
+                        src={room.image}
+                        alt={room.name}
+                        fill
+                        sizes="85vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      {/* Category Badge */}
+                      <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-earth text-[9px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-full">
+                        {room.category}
+                      </span>
+                      {room.popular && (
+                        <span className="absolute top-4 right-4 bg-nanohana text-earth text-[9px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1">
+                          <Award className="w-3 h-3" /> Signature
+                        </span>
+                      )}
+                      {/* Gallery Button */}
+                      <button
+                        onClick={() => openGallery(room)}
+                        className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-earth p-2.5 rounded-full hover:bg-earth hover:text-white transition-all z-10"
+                        aria-label="View Gallery"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="p-5 space-y-4">
+                      <div>
+                        <h3 className="font-serif text-2xl text-earth font-normal tracking-tight leading-tight">
+                          {room.name}
+                        </h3>
+                        <p className="text-earth/60 text-sm leading-relaxed mt-2 font-sans line-clamp-2">
+                          {room.desc}
+                        </p>
+                      </div>
+
+                      {/* Key Features (compact) */}
+                      <div className="flex flex-wrap gap-2">
+                        {room.features.slice(0, 4).map((feat: string, i: number) => (
+                          <span key={i} className="flex items-center gap-1.5 text-[11px] text-earth/60 bg-earth/5 px-2.5 py-1 rounded-full">
+                            <CheckCircle className="w-3 h-3 text-earth/30" strokeWidth={1.5} />
+                            {feat}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Amenity Tags */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {room.amenities.slice(0, 4).map((amenity: string, i: number) => (
+                          <span key={i} className="px-2 py-1 border border-earth/10 text-[9px] font-mono tracking-wider uppercase text-earth/50 rounded">
+                            {amenity}
+                          </span>
+                        ))}
+                        {room.amenities.length > 4 && (
+                          <span className="px-2 py-1 text-[9px] font-mono tracking-wider uppercase text-earth/40">
+                            +{room.amenities.length - 4} more
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Price & CTA */}
+                      <div className="flex items-center justify-between pt-4 border-t border-earth/10">
+                        <div>
+                          <span className="text-[9px] text-earth/40 font-mono tracking-widest uppercase block mb-0.5">From</span>
+                          <span className="text-2xl font-serif text-earth">
+                            {(room.pricingConfig && room.pricingConfig.length > 0)
+                              ? `$${Math.min(...room.pricingConfig.map((t: any) => parseInt(t.price.replace(/[^0-9.]/g, '')) || 0))}`
+                              : room.price}
+                          </span>
+                          <span className="text-xs text-earth/50 font-sans ml-1">/ night</span>
+                        </div>
+                        <Link
+                          href="/reservations"
+                          className="px-6 py-3 bg-earth text-cream text-[11px] font-mono tracking-widest uppercase hover:bg-earth/90 transition-colors rounded-full"
                         >
-                          <Camera className="w-4 h-4" /> View Gallery
-                        </button>
+                          Reserve
+                        </Link>
                       </div>
                     </div>
-
-                    {/* Scrolling Content Side */}
-                    <div className={`w-full md:w-1/2 flex items-center py-24 px-8 md:px-16 lg:px-24 bg-cream ${isEven ? 'md:order-2' : 'md:order-1'}`}>
-                      <motion.div 
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: "-10%" }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="w-full max-w-xl mx-auto space-y-12"
-                      >
-                        <div className="space-y-6">
-                          <div className="flex items-center gap-4">
-                            <EditableText as="span" page="rooms" contentKey={`room_${room.id}_category`} defaultText={room.category} currentText={getText(`room_${room.id}_category`)} editMode={editMode} className="text-[10px] font-mono uppercase tracking-[0.2em] text-earth/60" />
-                            {room.popular && (
-                              <span className="text-[10px] font-mono uppercase tracking-widest text-earth/80 flex items-center gap-1.5 border border-earth/20 px-2 py-1">
-                                <Award className="w-3 h-3" /> Signature
-                              </span>
-                            )}
-                          </div>
-                          <EditableText as="h3" page="rooms" contentKey={`room_${room.id}_name`} defaultText={room.name} currentText={getText(`room_${room.id}_name`)} editMode={editMode} className="font-serif text-4xl lg:text-5xl text-earth font-normal tracking-tight leading-tight" />
-                          <EditableText as="p" page="rooms" contentKey={`room_${room.id}_desc`} defaultText={room.desc} currentText={getText(`room_${room.id}_desc`)} editMode={editMode} className="text-earth/70 text-base leading-relaxed font-sans" />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-earth/10 text-sm text-earth/80">
-                          {room.features.map((feat: string, i: number) => (
-                            <div key={i} className={`flex items-start gap-3`}>
-                              <CheckCircle className="w-4 h-4 text-earth/30 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
-                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_feat_${i}`} defaultText={feat} currentText={getText(`room_${room.id}_feat_${i}`)} editMode={editMode} className="font-light" />
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 pt-8">
-                          {room.amenities.map((amenity: string, i: number) => (
-                            <EditableText as="span" page="rooms" contentKey={`room_${room.id}_amenity_${i}`} defaultText={amenity} currentText={getText(`room_${room.id}_amenity_${i}`)} editMode={editMode} key={i} className="px-3 py-1.5 border border-earth/10 text-[10px] font-mono tracking-widest uppercase text-earth/60" />
-                          ))}
-                        </div>
-
-                        <div className="pt-12 mt-12 border-t border-earth/10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
-                          <div>
-                            <EditableText as="span" page="rooms" contentKey="rooms_starting_rate_lbl" defaultText="Starting Rate" currentText={getText('rooms_starting_rate_lbl')} editMode={editMode} className="text-[10px] text-earth/50 font-mono tracking-widest uppercase block mb-2" />
-                            <div className="text-3xl font-serif text-earth font-normal flex items-baseline gap-2">
-                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_price`} defaultText={room.price} currentText={(room.pricingConfig && room.pricingConfig.length > 0) ? `$${Math.min(...room.pricingConfig.map((t: any) => parseInt(t.price.replace(/[^0-9.]/g, '')) || 0))}` : getText(`room_${room.id}_price`)} editMode={editMode} />
-                              <EditableText as="span" page="rooms" contentKey="rooms_per_night" defaultText="/ night" currentText={getText('rooms_per_night')} editMode={editMode} className="text-sm text-earth/50 font-sans" />
-                            </div>
-                          </div>
-                          <Link href="/reservations" className="px-10 py-4 bg-earth text-cream hover:bg-earth/90 transition-colors text-xs font-mono tracking-widest uppercase text-center w-full sm:w-auto">
-                            Reserve
-                          </Link>
-                        </div>
-                      </motion.div>
-                    </div>
-
                   </div>
-                </motion.div>
-              );
-            })}
-            </AnimatePresence>
-          </div>
+                ))}
+              </div>
+              {/* Scroll Indicator Dots */}
+              <div className="flex justify-center gap-1.5 pt-4">
+                {filteredRooms.map((_: any, i: number) => (
+                  <span key={i} className="w-1.5 h-1.5 rounded-full bg-earth/20" />
+                ))}
+              </div>
+            </div>
+
+            {/* ===== DESKTOP: Magazine Split-Screen Layout ===== */}
+            <div className="hidden md:flex md:flex-col">
+              <AnimatePresence>
+                {filteredRooms.map((room: any, index: number) => {
+                  const isEven = index % 2 === 0;
+                  return (
+                    <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} key={room.id} id={`room-${room.id}`} className="relative w-full border-b border-earth/10 last:border-b-0">
+                    <div className="flex flex-row min-h-screen">
+                      
+                      {/* Sticky Image Side */}
+                      <div className={`w-1/2 ${isEven ? 'order-1' : 'order-2'}`}>
+                        <div className="relative sticky top-0 h-screen w-full overflow-hidden group">
+                          <Image 
+                            src={room.image} 
+                            alt={room.name} 
+                            fill 
+                            sizes="50vw"
+                            className="object-cover transition-transform duration-1000 group-hover:scale-105" 
+                          />
+                          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-all duration-500" />
+                          <button 
+                            onClick={() => openGallery(room)} 
+                            className="absolute bottom-8 right-8 bg-white/90 backdrop-blur-md text-earth px-6 py-3 rounded-none flex items-center gap-3 hover:bg-earth hover:text-white transition-all transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 font-mono tracking-widest text-[10px] uppercase z-10"
+                          >
+                            <Camera className="w-4 h-4" /> View Gallery
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Scrolling Content Side */}
+                      <div className={`w-1/2 flex items-center py-24 px-16 lg:px-24 bg-cream ${isEven ? 'order-2' : 'order-1'}`}>
+                        <motion.div 
+                          initial={{ opacity: 0, y: 40 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true, margin: "-10%" }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                          className="w-full max-w-xl mx-auto space-y-12"
+                        >
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_category`} defaultText={room.category} currentText={getText(`room_${room.id}_category`)} editMode={editMode} className="text-[10px] font-mono uppercase tracking-[0.2em] text-earth/60" />
+                              {room.popular && (
+                                <span className="text-[10px] font-mono uppercase tracking-widest text-earth/80 flex items-center gap-1.5 border border-earth/20 px-2 py-1">
+                                  <Award className="w-3 h-3" /> Signature
+                                </span>
+                              )}
+                            </div>
+                            <EditableText as="h3" page="rooms" contentKey={`room_${room.id}_name`} defaultText={room.name} currentText={getText(`room_${room.id}_name`)} editMode={editMode} className="font-serif text-4xl lg:text-5xl text-earth font-normal tracking-tight leading-tight" />
+                            <EditableText as="p" page="rooms" contentKey={`room_${room.id}_desc`} defaultText={room.desc} currentText={getText(`room_${room.id}_desc`)} editMode={editMode} className="text-earth/70 text-base leading-relaxed font-sans" />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-6 pt-10 border-t border-earth/10 text-sm text-earth/80">
+                            {room.features.map((feat: string, i: number) => (
+                              <div key={i} className="flex items-start gap-3">
+                                <CheckCircle className="w-4 h-4 text-earth/30 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                                <EditableText as="span" page="rooms" contentKey={`room_${room.id}_feat_${i}`} defaultText={feat} currentText={getText(`room_${room.id}_feat_${i}`)} editMode={editMode} className="font-light" />
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 pt-8">
+                            {room.amenities.map((amenity: string, i: number) => (
+                              <EditableText as="span" page="rooms" contentKey={`room_${room.id}_amenity_${i}`} defaultText={amenity} currentText={getText(`room_${room.id}_amenity_${i}`)} editMode={editMode} key={i} className="px-3 py-1.5 border border-earth/10 text-[10px] font-mono tracking-widest uppercase text-earth/60" />
+                            ))}
+                          </div>
+
+                          <div className="pt-12 mt-12 border-t border-earth/10 flex flex-row items-center justify-between gap-8">
+                            <div>
+                              <EditableText as="span" page="rooms" contentKey="rooms_starting_rate_lbl" defaultText="Starting Rate" currentText={getText('rooms_starting_rate_lbl')} editMode={editMode} className="text-[10px] text-earth/50 font-mono tracking-widest uppercase block mb-2" />
+                              <div className="text-3xl font-serif text-earth font-normal flex items-baseline gap-2">
+                                <EditableText as="span" page="rooms" contentKey={`room_${room.id}_price`} defaultText={room.price} currentText={(room.pricingConfig && room.pricingConfig.length > 0) ? `$${Math.min(...room.pricingConfig.map((t: any) => parseInt(t.price.replace(/[^0-9.]/g, '')) || 0))}` : getText(`room_${room.id}_price`)} editMode={editMode} />
+                                <EditableText as="span" page="rooms" contentKey="rooms_per_night" defaultText="/ night" currentText={getText('rooms_per_night')} editMode={editMode} className="text-sm text-earth/50 font-sans" />
+                              </div>
+                            </div>
+                            <Link href="/reservations" className="px-10 py-4 bg-earth text-cream hover:bg-earth/90 transition-colors text-xs font-mono tracking-widest uppercase text-center">
+                              Reserve
+                            </Link>
+                          </div>
+                        </motion.div>
+                      </div>
+
+                    </div>
+                  </motion.div>
+                );
+              })}
+              </AnimatePresence>
+            </div>
+          </>
         )}
       </section>
 

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR: revalidate every 60 seconds
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>

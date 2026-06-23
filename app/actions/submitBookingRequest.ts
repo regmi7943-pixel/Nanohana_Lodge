@@ -1,5 +1,7 @@
 'use server';
 
+import { createClient } from '@supabase/supabase-js';
+
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 import { sendBookingRequestEmail } from '@/lib/email';
@@ -23,36 +25,11 @@ export async function submitBookingRequest(newReq: any) {
     message: sanitizeString(newReq.message || ''),
   };
 
-  // Fetch the current requests
-  const { data, error: fetchError } = await supabase
-    .from('site_content')
-    .select('value')
-    .eq('page', 'global')
-    .eq('key', 'booking_requests')
-    .single();
+  // Call the SECURITY DEFINER Postgres function to safely bypass RLS
+  const { error: rpcError } = await supabase.rpc('append_booking_request', { new_req: sanitizedReq });
 
-  if (fetchError && fetchError.code !== 'PGRST116') {
-    return { error: 'Failed to fetch current requests' };
-  }
-
-  let currentRequests = [];
-  try {
-    if (data?.value) {
-      currentRequests = JSON.parse(data.value);
-    }
-  } catch (e) {
-    currentRequests = [];
-  }
-
-  currentRequests.push(sanitizedReq);
-
-  // Upsert the updated list (bypassing auth since it's a server action submitting a user request)
-  const { error: updateError } = await supabase
-    .from('site_content')
-    .upsert({ page: 'global', key: 'booking_requests', value: JSON.stringify(currentRequests), updated_at: new Date().toISOString() }, { onConflict: 'page,key' });
-
-  if (updateError) {
-    return { error: updateError.message };
+  if (rpcError) {
+    return { error: rpcError.message };
   }
 
   try {

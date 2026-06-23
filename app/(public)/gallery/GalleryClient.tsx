@@ -21,140 +21,58 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
 
   const tabs = ['All', 'Rooms', 'Garden & Terrace', 'Views', 'Pokhara'];
 
-  const photos = [
-    {
-      id: 1,
-      category: 'Views',
-      image: 'https://picsum.photos/seed/annapurna/1200/800',
-      title: 'Annapurna range from rooftop',
-      desc: 'The sweeping, unobstructed panorama visible from our communal deck at 6:15 AM.'
-    },
-    {
-      id: 2,
-      category: 'Rooms',
-      image: 'https://picsum.photos/seed/nanohanadeluxe/1200/800',
-      title: 'Deluxe Room interior & terrace',
-      desc: 'King bed setup, clean polished marble floors, and sliding glass frame facing the snow caps.'
-    },
-    {
-      id: 3,
-      category: 'Rooms',
-      image: 'https://picsum.photos/seed/nanohanastandard/1200/800',
-      title: 'Standard Double Room',
-      desc: 'Modest, immaculate fan-cooled layout with an attached private restroom.'
-    },
-    {
-      id: 4,
-      category: 'Garden & Terrace',
-      image: 'https://picsum.photos/seed/nanohanagarden/1200/800',
-      title: 'Terrace garden with blooming flora',
-      desc: 'Lovingly arranged hibiscus, canolas, and trailing organic climbers spanning all storeys.'
-    },
-    {
-      id: 5,
-      category: 'Garden & Terrace',
-      image: 'https://picsum.photos/seed/vegetation/1200/800',
-      title: 'Communal flower balcony chairs',
-      desc: 'Our second-storey shared balcony overlooking the quiet pedestrian lanes.'
-    },
-    {
-      id: 6,
-      category: 'Rooms',
-      image: 'https://picsum.photos/seed/teafresh/1200/800',
-      title: 'Private attached restroom & hot shower',
-      desc: 'Immaculately clean, featuring rainfall showerheads with exceptional water pressure.'
-    },
-    {
-      id: 7,
-      category: 'Views',
-      image: 'https://picsum.photos/seed/sunrisepeak/1200/800',
-      title: 'Rooftop golden sunrise over Pokhara',
-      desc: 'Waking up to misty valleys and golden Annapurna peaks greets you in Nepal.'
-    },
-    {
-      id: 8,
-      category: 'Pokhara',
-      image: 'https://picsum.photos/seed/phewautc/1200/800',
-      title: 'Phewa Lake reflection perspective',
-      desc: 'The iconic peaceful lake just a 300-metre strolling pathway from our entrance.'
-    },
-    {
-      id: 9,
-      category: 'Pokhara',
-      image: 'https://picsum.photos/seed/organicgardens/1200/800',
-      title: 'Lodge building exterior facade',
-      desc: 'A cohesive three-storey structure wrapped inside gardens on Lakeside Street 4.'
-    }
-  ];
+  const rawGallery = content.find((c: any) => c.key === 'global_gallery_photos')?.value;
+  let customGallery = [];
+  try {
+    if (rawGallery) customGallery = JSON.parse(rawGallery);
+  } catch(e) {}
 
-  const filteredPhotos = photos.filter((photo) => {
+  const photos = customGallery;
+
+  // Map customGallery urls to image property to match the photo grid expected structure
+  const formattedPhotos = photos.map((p: any) => ({
+    ...p,
+    image: p.image || p.url // Use url from custom gallery if image isn't set
+  }));
+
+  const filteredPhotos = formattedPhotos.filter((photo: any) => {
     if (activeTab === 'All') return true;
     return photo.category === activeTab;
   });
 
   const openLightbox = (photoId: number) => {
-    const origIndex = photos.findIndex((p) => p.id === photoId);
+    const origIndex = formattedPhotos.findIndex((p: any) => p.id === photoId);
     setSelectedPhotoIndex(origIndex);
   };
 
   const handleNextMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (selectedPhotoIndex === null) return;
-    setSelectedPhotoIndex((prev) => (prev! + 1) % photos.length);
+    setSelectedPhotoIndex((prev) => (prev! + 1) % formattedPhotos.length);
   };
 
   const handlePrevMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (selectedPhotoIndex === null) return;
-    setSelectedPhotoIndex((prev) => (prev! - 1 + photos.length) % photos.length);
+    setSelectedPhotoIndex((prev) => (prev! - 1 + formattedPhotos.length) % formattedPhotos.length);
   };
 
   return (
     <div id="gallery-page" className="w-full">
-      {/* SUB-HERO SECTION WITH 2X2 MINI MOSAIC AND NO OVERLAY TEXT IN IMAGE WAY */}
-      <section id="gallery-mosaic" className="relative w-full h-[60vh] min-h-[420px] bg-forest flex items-center justify-center">
-        {/* Real Mosaic block background styling */}
-        <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-4 h-full w-full opacity-65">
-          <div className="relative h-full w-full">
-            <Image
-              src="https://picsum.photos/seed/annapurna/500/500"
-              alt="Annapurna peaks backdrop"
-              fill
-              priority={true}
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="relative h-full w-full">
-            <Image
-              src="https://picsum.photos/seed/nanohanagarden/500/500"
-              alt="Rooftop blooming garden flowers"
-              fill
-              priority={true}
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="relative h-full w-full">
-            <Image
-              src="https://picsum.photos/seed/nanohanastandard/500/500"
-              alt="Lakeside Pokhara tidy bed"
-              fill
-              priority={true}
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="relative h-full w-full">
-            <Image
-              src="https://picsum.photos/seed/sunrisepeak/500/500"
-              alt="Sunset panoramic valleys"
-              fill
-              priority={true}
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-cover"
-            />
-          </div>
+      {/* HERO SECTION WITH SINGLE IMAGE */}
+      <section id="gallery-hero" className="relative w-full h-[60vh] min-h-[420px] bg-forest flex items-center justify-center">
+        <div className="absolute inset-0 h-full w-full">
+          <EditableImage
+            page="gallery"
+            contentKey="gallery_hero_bg"
+            defaultSrc="/story_home2.jpg"
+            currentSrc={getText('gallery_hero_bg')}
+            editMode={editMode}
+            alt="Nanohana Lodge Gallery"
+            fill
+            priority={true}
+            className="object-cover"
+          />
           <div className="absolute inset-0 bg-forest/45 mix-blend-multiply pointer-events-none" />
         </div>
 
@@ -189,7 +107,7 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
       <section id="gallery-grid" className="bg-cream py-16 text-earth">
         <div className="max-w-[1240px] mx-auto px-5 md:px-10 lg:px-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPhotos.map((photo) => (
+            {filteredPhotos.map((photo: any) => (
               <div
                 key={photo.id}
                 id={`photo-tile-${photo.id}`}

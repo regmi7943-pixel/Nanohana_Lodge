@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 
@@ -44,10 +45,14 @@ const CurtainLoader = () => {
         transition={{ duration: 1.5, ease: [0.76, 0, 0.24, 1] }}
         className="w-1/2 h-full relative overflow-hidden bg-black shadow-[10px_0_20px_rgba(0,0,0,0.5)] z-10"
       >
-        <img
+        <Image
           src="/curtain.png"
           alt="Curtain Left"
-          className="absolute top-0 left-0 w-[100vw] h-full object-cover max-w-none"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+          style={{ objectPosition: 'left center' }}
         />
       </motion.div>
 
@@ -58,10 +63,14 @@ const CurtainLoader = () => {
         transition={{ duration: 1.5, ease: [0.76, 0, 0.24, 1] }}
         className="w-1/2 h-full relative overflow-hidden bg-black shadow-[-10px_0_20px_rgba(0,0,0,0.5)] z-10"
       >
-        <img
+        <Image
           src="/curtain.png"
           alt="Curtain Right"
-          className="absolute top-0 right-0 w-[100vw] h-full object-cover max-w-none"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+          style={{ objectPosition: 'right center' }}
         />
       </motion.div>
     </div>

@@ -98,7 +98,7 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
       category: 'Standard',
       view: 'Garden',
       desc: 'Room description here...',
-      image: 'https://picsum.photos/seed/newroom/1000/667',
+      image: '/story_home.jpg',
       features: ['15 m² Area', '1 Double Bed'],
       amenities: ['Free WiFi'],
       popular: false,
@@ -180,8 +180,18 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
   };
 
   const handleAddPricingTier = () => {
-    const newTier = { guests: 1, label: '1 Adult', price: '$12' };
-    const newConfig = [...(pricingRoom.pricingConfig || []), newTier];
+    const currentConfig = pricingRoom.pricingConfig || [];
+    let nextGuest = 1;
+    let nextPrice = '$12';
+    
+    if (currentConfig.length > 0) {
+      const lastTier = currentConfig[currentConfig.length - 1];
+      nextGuest = (Number(lastTier.guests) || 0) + 1;
+      nextPrice = lastTier.price;
+    }
+
+    const newTier = { guests: nextGuest, label: `${nextGuest} Adult${nextGuest > 1 ? 's' : ''}`, price: nextPrice };
+    const newConfig = [...currentConfig, newTier];
     setPricingRoom({ ...pricingRoom, pricingConfig: newConfig });
   };
 
@@ -438,7 +448,7 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
                         </div>
                         <div className="w-28 flex-shrink-0">
                           <label className="text-[10px] uppercase text-cream/40 ml-1" title="Used to calculate booking costs behind the scenes">Num Guests</label>
-                          <input type="number" value={tier.guests} onChange={e => handleUpdatePricingTier(i, 'guests', parseInt(e.target.value))} placeholder="1" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" title="Used to calculate booking costs behind the scenes" />
+                          <input type="number" value={tier.guests || ''} onChange={e => handleUpdatePricingTier(i, 'guests', e.target.value ? parseInt(e.target.value) : '')} placeholder="1" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" title="Used to calculate booking costs behind the scenes" />
                         </div>
                         <div className="w-28 flex-shrink-0">
                           <label className="text-[10px] uppercase text-cream/40 ml-1">Price</label>
