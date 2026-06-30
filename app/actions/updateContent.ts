@@ -3,16 +3,18 @@
 import { requireAuth } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 
-// Simple XSS sanitization that strips script tags, event handlers, and javascript URIs.
+// Simple XSS sanitization that strips dangerous tags but allows safe formatting tags.
+// Allowed: b, i, u, strong, em, span, font, br, sub, sup
+// Blocked: script, iframe, object, embed, applet, form, math, svg, link, meta, style, base
 function sanitizeString(str: string): string {
   if (typeof str !== 'string') return '';
   
-  // Basic removal of potentially dangerous tags
-  let sanitized = str.replace(/<\/?(?:script|iframe|object|embed|applet|form|math|svg)[^>]*>/gi, '');
+  // Remove dangerous tags (keep their text content)
+  let sanitized = str.replace(/<\/?(?:script|iframe|object|embed|applet|form|math|svg|link|meta|style|base|textarea|select|input|button)[^>]*>/gi, '');
   
   // Remove inline event handlers (e.g., onload, onerror, etc)
-  sanitized = sanitized.replace(/on[a-z]+=["'][^"']*["']/gi, '');
-  sanitized = sanitized.replace(/on[a-z]+=[^>\s]+/gi, '');
+  sanitized = sanitized.replace(/\s+on[a-z]+\s*=\s*["'][^"']*["']/gi, '');
+  sanitized = sanitized.replace(/\s+on[a-z]+\s*=\s*[^\s>]+/gi, '');
   
   // Remove javascript: URIs
   sanitized = sanitized.replace(/javascript:/gi, 'blocked:');

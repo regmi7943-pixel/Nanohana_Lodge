@@ -13,6 +13,7 @@ export function middleware(request: NextRequest) {
     "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' https://*.supabase.co https://res.cloudinary.com",
     "media-src 'self'",
+    "frame-src 'self' https://maps.google.com https://*.google.com",
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
