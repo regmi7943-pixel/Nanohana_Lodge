@@ -22,6 +22,24 @@ const FONT_OPTIONS = [
   { label: 'Cursive', value: 'cursive' },
 ];
 
+// Utility to save and restore text selection across focus changes
+function saveSelection(): Range | null {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    return sel.getRangeAt(0).cloneRange();
+  }
+  return null;
+}
+
+function restoreSelection(range: Range | null) {
+  if (!range) return;
+  const sel = window.getSelection();
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
 const EditableText = ({
   page,
   contentKey,
@@ -35,10 +53,13 @@ const EditableText = ({
   const [isSaving, setIsSaving] = useState(false);
   const [initialValue, setInitialValue] = useState(currentText || defaultText);
   const [showFontMenu, setShowFontMenu] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isBold, setIsBold] = useState(false);
+  const [isUnderlined, setIsUnderlined] = useState(false);
+  const [activeColor, setActiveColor] = useState('#000000');
   const contentRef = useRef<HTMLElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
 
   const displayValue = currentText || defaultText;
 
@@ -46,7 +67,6 @@ const EditableText = ({
   useEffect(() => {
     if (isEditing && contentRef.current) {
       contentRef.current.focus();
-      // Move cursor to the end
       const range = document.createRange();
       const sel = window.getSelection();
       if (sel) {
@@ -56,6 +76,20 @@ const EditableText = ({
         sel.addRange(range);
       }
     }
+  }, [isEditing]);
+
+  // Poll format state while editing so buttons reflect current selection
+  useEffect(() => {
+    if (!isEditing) return;
+    const checkFormats = () => {
+      try {
+        setIsBold(document.queryCommandState('bold'));
+        setIsUnderlined(document.queryCommandState('underline'));
+      } catch {}
+    };
+    // Check on selection changes
+    document.addEventListener('selectionchange', checkFormats);
+    return () => document.removeEventListener('selectionchange', checkFormats);
   }, [isEditing]);
 
   // Close font menu on outside click
@@ -72,14 +106,11 @@ const EditableText = ({
 
   const handleSave = async () => {
     if (!contentRef.current) return;
-
-    // Use innerHTML to preserve HTML formatting and line breaks (<br>)
     const newValue = contentRef.current.innerHTML || '';
 
     if (newValue.trim() === displayValue.trim()) {
       setIsEditing(false);
       setShowFontMenu(false);
-      setShowColorPicker(false);
       return;
     }
 
@@ -88,7 +119,6 @@ const EditableText = ({
     setIsSaving(false);
     setIsEditing(false);
     setShowFontMenu(false);
-    setShowColorPicker(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -102,14 +132,16 @@ const EditableText = ({
       }
       setIsEditing(false);
       setShowFontMenu(false);
-      setShowColorPicker(false);
     }
   };
 
   const execFormat = useCallback((command: string, value?: string) => {
-    // Restore focus to contentEditable before executing command
+    // Restore saved selection first, then focus, then execute
+    restoreSelection(savedRangeRef.current);
     contentRef.current?.focus();
     document.execCommand(command, false, value);
+    // Save the new selection state after command
+    savedRangeRef.current = saveSelection();
   }, []);
 
   const handleBold = useCallback((e: React.MouseEvent) => {
@@ -127,28 +159,49 @@ const EditableText = ({
   const handleColorClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    colorInputRef.current?.click();
+    // Save selection before color picker opens (it steals focus)
+    savedRangeRef.current = saveSelection();
+    // Programmatically open the color input
+    if (colorInputRef.current) {
+      colorInputRef.current.click();
+    }
   }, []);
 
   const handleColorChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    execFormat('foreColor', e.target.value);
-  }, [execFormat]);
+    const color = e.target.value;
+    setActiveColor(color);
+    // Restore selection then apply color
+    restoreSelection(savedRangeRef.current);
+    contentRef.current?.focus();
+    document.execCommand('foreColor', false, color);
+    savedRangeRef.current = saveSelection();
+  }, []);
 
   const handleFontToggle = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Save selection before opening the font menu
+    savedRangeRef.current = saveSelection();
     setShowFontMenu(prev => !prev);
   }, []);
 
   const handleFontSelect = useCallback((fontValue: string) => {
+    // Restore the saved selection, then apply font
+    restoreSelection(savedRangeRef.current);
+    contentRef.current?.focus();
     if (fontValue) {
-      execFormat('fontName', fontValue);
+      document.execCommand('fontName', false, fontValue);
     } else {
-      // Reset to default - remove font styling
-      execFormat('removeFormat');
+      document.execCommand('removeFormat');
     }
+    savedRangeRef.current = saveSelection();
     setShowFontMenu(false);
-  }, [execFormat]);
+  }, []);
+
+  // Save selection whenever the user interacts with content (mouseup, keyup)
+  const handleSelectionSave = useCallback(() => {
+    savedRangeRef.current = saveSelection();
+  }, []);
 
   // Normal visitor mode — render HTML so saved formatting displays
   if (!editMode) {
@@ -170,9 +223,15 @@ const EditableText = ({
             setIsEditing(true);
           }
         }}
+        onMouseUp={isEditing ? handleSelectionSave : undefined}
+        onKeyUp={isEditing ? handleSelectionSave : undefined}
         onBlur={(e: React.FocusEvent) => {
-          // Don't save if clicking inside the toolbar
+          // Don't save if clicking inside the toolbar or color picker
           if (toolbarRef.current?.contains(e.relatedTarget as Node)) {
+            return;
+          }
+          // Don't save if the color picker is what stole focus
+          if (colorInputRef.current === e.relatedTarget) {
             return;
           }
           if (isEditing) handleSave();
@@ -192,52 +251,77 @@ const EditableText = ({
         <div
           ref={toolbarRef}
           className="absolute -top-10 right-0 z-50 flex items-center gap-1 px-1.5 py-1 bg-[#1a1a2e]/95 backdrop-blur-xl border border-nanohana/30 rounded-full shadow-xl"
-          onMouseDown={(e) => e.preventDefault()} // Prevent blur on toolbar click
+          onMouseDown={(e) => {
+            // Prevent blur on toolbar click, but NOT on the color input
+            if (e.target !== colorInputRef.current) {
+              e.preventDefault();
+            }
+          }}
         >
-          {/* Bold */}
+          {/* Bold — gold highlight when active */}
           <button
             type="button"
             onClick={handleBold}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-cream/70 hover:text-nanohana hover:bg-white/10 transition-all"
+            className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
+              isBold
+                ? 'text-nanohana bg-nanohana/20 ring-1 ring-nanohana/50'
+                : 'text-cream/70 hover:text-nanohana hover:bg-white/10'
+            }`}
             title="Bold"
           >
             <Bold className="w-3.5 h-3.5" strokeWidth={2.5} />
           </button>
 
-          {/* Underline */}
+          {/* Underline — gold highlight when active */}
           <button
             type="button"
             onClick={handleUnderline}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-cream/70 hover:text-nanohana hover:bg-white/10 transition-all"
+            className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
+              isUnderlined
+                ? 'text-nanohana bg-nanohana/20 ring-1 ring-nanohana/50'
+                : 'text-cream/70 hover:text-nanohana hover:bg-white/10'
+            }`}
             title="Underline"
           >
             <Underline className="w-3.5 h-3.5" strokeWidth={2.5} />
           </button>
 
-          {/* Color Picker */}
-          <button
-            type="button"
-            onClick={handleColorClick}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-cream/70 hover:text-nanohana hover:bg-white/10 transition-all relative"
-            title="Text Color"
-          >
-            <Palette className="w-3.5 h-3.5" strokeWidth={2} />
+          {/* Color Picker — show active color dot */}
+          <div className="relative w-7 h-7 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={handleColorClick}
+              className="w-7 h-7 flex items-center justify-center rounded-full text-cream/70 hover:text-nanohana hover:bg-white/10 transition-all"
+              title="Text Color"
+            >
+              <Palette className="w-3.5 h-3.5" strokeWidth={2} />
+              {/* Active color indicator dot */}
+              <span
+                className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full border border-white/30"
+                style={{ backgroundColor: activeColor }}
+              />
+            </button>
+            {/* Hidden color input - positioned outside toolbar to avoid preventDefault issues */}
             <input
               ref={colorInputRef}
               type="color"
-              defaultValue="#000000"
+              value={activeColor}
               onChange={handleColorChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="absolute bottom-0 left-0 w-0 h-0 opacity-0 pointer-events-none"
               tabIndex={-1}
             />
-          </button>
+          </div>
 
           {/* Font Picker */}
           <div className="relative">
             <button
               type="button"
               onClick={handleFontToggle}
-              className="w-7 h-7 flex items-center justify-center rounded-full text-cream/70 hover:text-nanohana hover:bg-white/10 transition-all"
+              className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
+                showFontMenu
+                  ? 'text-nanohana bg-nanohana/20 ring-1 ring-nanohana/50'
+                  : 'text-cream/70 hover:text-nanohana hover:bg-white/10'
+              }`}
               title="Font Family"
             >
               <Type className="w-3.5 h-3.5" strokeWidth={2.5} />
