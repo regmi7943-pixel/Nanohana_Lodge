@@ -63,9 +63,10 @@ const EditableText = ({
 
   const displayValue = currentText || defaultText;
 
-  // Auto-focus when editing starts
+  // Initialize content and auto-focus when editing starts
   useEffect(() => {
     if (isEditing && contentRef.current) {
+      contentRef.current.innerHTML = initialValue;
       contentRef.current.focus();
       const range = document.createRange();
       const sel = window.getSelection();
@@ -75,8 +76,10 @@ const EditableText = ({
         sel.removeAllRanges();
         sel.addRange(range);
       }
+      // Save initial selection range
+      savedRangeRef.current = saveSelection();
     }
-  }, [isEditing]);
+  }, [isEditing, initialValue]);
 
   // Poll format state while editing so buttons reflect current selection
   useEffect(() => {
@@ -269,7 +272,7 @@ const EditableText = ({
             ? 'outline-none ring-[1.5px] ring-nanohana ring-offset-[3px] ring-offset-[#1a1a2e] rounded-[3px] cursor-text bg-white/5 relative z-10'
             : 'hover:outline-none hover:ring-[1.5px] hover:ring-nanohana/60 hover:ring-offset-[3px] hover:ring-offset-transparent hover:bg-white/5 hover:rounded-[3px] cursor-pointer transition-all duration-150'
         } ${isSaving ? 'opacity-50 pointer-events-none' : ''} relative`}
-        dangerouslySetInnerHTML={{ __html: isEditing ? initialValue : displayValue }}
+        dangerouslySetInnerHTML={!isEditing ? { __html: displayValue } : undefined}
       >
       </Component>
 
