@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Monitor, ArrowLeft, ExternalLink } from 'lucide-react';
+import { RefreshCw, Monitor, ArrowLeft, ExternalLink, Undo2 } from 'lucide-react';
 import Link from 'next/link';
+import { updateContent } from '@/app/actions/updateContent';
 
 const PAGES = [
   { key: 'home', label: 'Home', path: '/' },
@@ -19,6 +20,7 @@ export default function ContentEditor() {
   const [activePage, setActivePage] = useState<typeof PAGES[number]>(PAGES[0]);
   const [refreshCounters, setRefreshCounters] = useState<Record<string, number>>({});
   const [visitedPages, setVisitedPages] = useState<Set<string>>(new Set([PAGES[0].key]));
+  const [undoStack, setUndoStack] = useState<Array<{ page: string, key: string, oldValue: string, newValue: string }>>([]);
 
   const handlePageChange = (page: typeof PAGES[number]) => {
     setActivePage(page);
@@ -29,6 +31,43 @@ export default function ContentEditor() {
     setRefreshCounters(prev => ({
       ...prev,
       [activePage.key]: (prev[activePage.key] || 0) + 1
+    }));
+  };
+
+  // Listen to content updates from iframe to populate undo stack
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'CONTENT_UPDATED') {
+        const { page, key, oldValue, newValue } = event.data;
+        setUndoStack(prev => [...prev, { page, key, oldValue, newValue }]);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const handleUndo = async () => {
+    if (undoStack.length === 0) return;
+    const lastChange = undoStack[undoStack.length - 1];
+
+    // Revert DB content to oldValue
+    await updateContent(lastChange.page, lastChange.key, lastChange.oldValue);
+
+    // Remove from stack
+    setUndoStack(prev => prev.slice(0, -1));
+
+    // Automatically switch active tab to the page of the change
+    const pageToSwitch = PAGES.find(p => p.key === lastChange.page);
+    if (pageToSwitch) {
+      setActivePage(pageToSwitch);
+      setVisitedPages(prev => new Set(prev).add(pageToSwitch.key));
+    }
+
+    // Refresh the corresponding iframe to display reverted content
+    setRefreshCounters(prev => ({
+      ...prev,
+      [lastChange.page]: (prev[lastChange.page] || 0) + 1
     }));
   };
 
@@ -65,6 +104,18 @@ export default function ContentEditor() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleUndo}
+            disabled={undoStack.length === 0}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+              undoStack.length > 0
+                ? 'bg-nanohana/10 hover:bg-nanohana/20 border border-nanohana/30 text-nanohana cursor-pointer'
+                : 'bg-white/5 text-white/20 border border-transparent cursor-not-allowed'
+            }`}
+            title={undoStack.length > 0 ? `Undo last edit (${undoStack.length} changes)` : 'Nothing to undo'}
+          >
+            <Undo2 className="w-3.5 h-3.5" /> Undo {undoStack.length > 0 ? `(${undoStack.length})` : ''}
+          </button>
           <button
             onClick={handleRefresh}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-md text-xs transition-colors text-white/60 hover:text-white"

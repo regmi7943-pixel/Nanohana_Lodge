@@ -94,7 +94,19 @@ const EditableImage = ({
       }
 
       // 2. Save the URL to Supabase via updateContent
-      await updateContent(page, contentKey, uploadRes.url);
+      const res = await updateContent(page, contentKey, uploadRes.url);
+
+      if (res && 'success' in res && res.success) {
+        if (typeof window !== 'undefined') {
+          window.parent.postMessage({
+            type: 'CONTENT_UPDATED',
+            page,
+            key: contentKey,
+            oldValue: displaySrc,
+            newValue: uploadRes.url
+          }, window.location.origin);
+        }
+      }
 
       // 3. Close modal
       setImageSrc(null);

@@ -104,9 +104,10 @@ const EditableText = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [showFontMenu]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!contentRef.current) return;
     const newValue = contentRef.current.innerHTML || '';
+    const oldValue = displayValue;
 
     if (newValue.trim() === displayValue.trim()) {
       setIsEditing(false);
@@ -115,11 +116,48 @@ const EditableText = ({
     }
 
     setIsSaving(true);
-    await updateContent(page, contentKey, newValue);
+    const result = await updateContent(page, contentKey, newValue);
     setIsSaving(false);
+
+    if (result && 'success' in result && result.success) {
+      if (typeof window !== 'undefined') {
+        window.parent.postMessage({
+          type: 'CONTENT_UPDATED',
+          page,
+          key: contentKey,
+          oldValue,
+          newValue
+        }, window.location.origin);
+      }
+    }
+
     setIsEditing(false);
     setShowFontMenu(false);
-  };
+  }, [displayValue, page, contentKey]);
+
+  // Click outside to save
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (contentRef.current && contentRef.current.contains(e.target as Node)) {
+        return;
+      }
+      if (toolbarRef.current && toolbarRef.current.contains(e.target as Node)) {
+        return;
+      }
+      if (colorInputRef.current && colorInputRef.current === e.target) {
+        return;
+      }
+
+      handleSave();
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEditing, handleSave]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -225,17 +263,6 @@ const EditableText = ({
         }}
         onMouseUp={isEditing ? handleSelectionSave : undefined}
         onKeyUp={isEditing ? handleSelectionSave : undefined}
-        onBlur={(e: React.FocusEvent) => {
-          // Don't save if clicking inside the toolbar or color picker
-          if (toolbarRef.current?.contains(e.relatedTarget as Node)) {
-            return;
-          }
-          // Don't save if the color picker is what stole focus
-          if (colorInputRef.current === e.relatedTarget) {
-            return;
-          }
-          if (isEditing) handleSave();
-        }}
         onKeyDown={isEditing ? handleKeyDown : undefined}
         className={`${className} ${
           isEditing

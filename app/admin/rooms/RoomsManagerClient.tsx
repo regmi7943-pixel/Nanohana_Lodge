@@ -299,7 +299,7 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
                 <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 bg-black/40 group">
                   <Image src={editingRoom.image} alt="Room cover" fill className="object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button onClick={() => fileInputRef.current?.click()} className="px-6 py-3 bg-nanohana text-earth font-bold rounded-full flex items-center gap-2 shadow-xl hover:scale-105 transition-transform">
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="px-6 py-3 bg-nanohana text-earth font-bold rounded-full flex items-center gap-2 shadow-xl hover:scale-105 transition-transform">
                       {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />} Change Cover
                     </button>
                   </div>
@@ -310,14 +310,14 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-cream/50 mb-3">
-                    Features <button onClick={() => addArrayItem('features')} className="text-nanohana hover:text-white flex items-center"><Plus className="w-4 h-4" /> Add</button>
+                    Features <button type="button" onClick={() => addArrayItem('features')} className="text-nanohana hover:text-white flex items-center"><Plus className="w-4 h-4" /> Add</button>
                   </label>
                   <div className="space-y-2">
                     {editingRoom.features.map((feat: string, i: number) => (
                       <div key={`feat-${i}`} className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-phewa flex-shrink-0" />
                         <input type="text" value={feat} onChange={e => handleArrayChange('features', i, e.target.value)} className="flex-1 bg-black/40 border border-transparent hover:border-white/10 focus:border-nanohana rounded px-2 py-1.5 text-sm text-white transition-colors outline-none" />
-                        <button onClick={() => removeArrayItem('features', i)} className="text-red-400 hover:bg-red-400/20 p-1.5 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button type="button" onClick={() => removeArrayItem('features', i)} className="text-red-400 hover:bg-red-400/20 p-1.5 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     ))}
                   </div>
@@ -325,13 +325,13 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
 
                 <div>
                   <label className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-cream/50 mb-3">
-                    Amenities <button onClick={() => addArrayItem('amenities')} className="text-nanohana hover:text-white flex items-center"><Plus className="w-4 h-4" /> Add</button>
+                    Amenities <button type="button" onClick={() => addArrayItem('amenities')} className="text-nanohana hover:text-white flex items-center"><Plus className="w-4 h-4" /> Add</button>
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {editingRoom.amenities.map((amenity: string, i: number) => (
                       <div key={`amenity-${i}`} className="flex items-center gap-1 bg-sage/20 border border-sage/30 rounded-full pl-3 pr-1 py-1 text-xs text-white">
                         <input type="text" value={amenity} onChange={e => handleArrayChange('amenities', i, e.target.value)} className="bg-transparent border-none outline-none w-20 focus:w-32 transition-all placeholder-white/30" />
-                        <button onClick={() => removeArrayItem('amenities', i)} className="text-red-400 hover:text-white p-1 rounded-full"><X className="w-3.5 h-3.5" /></button>
+                        <button type="button" onClick={() => removeArrayItem('amenities', i)} className="text-red-400 hover:text-white p-1 rounded-full"><X className="w-3.5 h-3.5" /></button>
                       </div>
                     ))}
                   </div>
