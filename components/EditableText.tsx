@@ -79,7 +79,8 @@ const EditableText = ({
       // Save initial selection range
       savedRangeRef.current = saveSelection();
     }
-  }, [isEditing, initialValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing]);
 
   // Poll format state while editing so buttons reflect current selection
   useEffect(() => {
