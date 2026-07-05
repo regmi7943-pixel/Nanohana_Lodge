@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { uploadImage, getUploadedImages } from '@/app/actions/uploadImage';
 import { updateContent } from '@/app/actions/updateContent';
 import { Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface CloudinaryImage {
   name: string;
@@ -24,6 +25,7 @@ const MAIN_CATEGORIES = ['Rooms', 'Garden & Terrace', 'Views', 'Pokhara'];
 const ROOM_CATEGORIES = ['Room', 'Washroom', 'View'];
 
 export default function ImagesClient({ content = [] }: { content?: any[] }) {
+  const router = useRouter();
   const rawRooms = content.find((c: any) => c.key === 'global_rooms_list')?.value;
   let DB_ROOMS = [];
   try {
@@ -98,7 +100,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
 
     await updateContent('global', 'global_gallery_photos', JSON.stringify(newGallery));
     setPendingFiles(null);
-    window.location.reload(); 
+    router.refresh(); 
     setIsUploading(false);
   };
 
@@ -108,7 +110,8 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
     const current = getPublicGallery();
     const newGallery = current.filter((img: any) => img.id !== imgId);
     await updateContent('global', 'global_gallery_photos', JSON.stringify(newGallery));
-    window.location.reload();
+    router.refresh();
+    setIsUploading(false);
   };
 
   const saveMainImageDetails = async () => {
@@ -121,7 +124,8 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
     );
     await updateContent('global', 'global_gallery_photos', JSON.stringify(newGallery));
     setEditingImage(null);
-    window.location.reload();
+    router.refresh();
+    setIsUploading(false);
   };
 
   const currentMainGallery = getPublicGallery().filter((img: any) => img.category === selectedMainCategory);
@@ -154,7 +158,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
     }
 
     await updateContent('rooms', `gallery_${selectedRoom}`, JSON.stringify(newGallery));
-    window.location.reload(); 
+    router.refresh(); 
     setIsUploading(false);
   };
 
@@ -163,7 +167,8 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
     const current = getRoomGallery(selectedRoom);
     const newGallery = current.filter((img: any) => img.url !== imgUrl);
     await updateContent('rooms', `gallery_${selectedRoom}`, JSON.stringify(newGallery));
-    window.location.reload();
+    router.refresh();
+    setIsUploading(false);
   };
 
   const currentRoomGallery = getRoomGallery(selectedRoom).filter((img: any) => img.category === selectedRoomCategory);
