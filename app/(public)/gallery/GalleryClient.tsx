@@ -172,7 +172,7 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
           {/* Lightbox Header Close */}
           <div className="w-full flex justify-between items-center text-cream px-4 py-2 z-10">
             <span className="text-xs font-mono tracking-widest uppercase">
-              <EditableText as="span" page="gallery" contentKey="gallery_lightbox_photo" defaultText="Photo" currentText={getText('gallery_lightbox_photo')} editMode={editMode} /> {selectedPhotoIndex + 1} <EditableText as="span" page="gallery" contentKey="gallery_lightbox_of" defaultText="of" currentText={getText('gallery_lightbox_of')} editMode={editMode} /> {photos.length}
+              <EditableText as="span" page="gallery" contentKey="gallery_lightbox_photo" defaultText="Photo" currentText={getText('gallery_lightbox_photo')} editMode={editMode} /> {selectedPhotoIndex + 1} <EditableText as="span" page="gallery" contentKey="gallery_lightbox_of" defaultText="of" currentText={getText('gallery_lightbox_of')} editMode={editMode} /> {formattedPhotos.length}
             </span>
             <button
               onClick={() => setSelectedPhotoIndex(null)}
@@ -197,8 +197,8 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
             {/* Core Image inside frame */}
             <div className="relative w-full h-full max-h-full rounded-lg overflow-hidden border border-white/10">
               <Image
-                src={photos[selectedPhotoIndex].image}
-                alt={photos[selectedPhotoIndex].title}
+                src={formattedPhotos[selectedPhotoIndex].image}
+                alt={formattedPhotos[selectedPhotoIndex].title}
                 fill
                 sizes="100vw"
                 className="object-contain"
@@ -217,8 +217,8 @@ export default function GalleryClient({ content = [], editMode = false }: { cont
 
           {/* Sinks Title & Explanation */}
           <div className="text-center text-cream px-4 py-4 max-w-xl z-10 space-y-1">
-            <EditableText as="h3" page="gallery" contentKey={`gallery_item_${photos[selectedPhotoIndex].id}_title`} defaultText={photos[selectedPhotoIndex].title} currentText={getText(`gallery_item_${photos[selectedPhotoIndex].id}_title`)} editMode={editMode} className="font-serif text-xl font-bold text-cream" />
-            <EditableText as="p" page="gallery" contentKey={`gallery_item_${photos[selectedPhotoIndex].id}_desc`} defaultText={photos[selectedPhotoIndex].desc} currentText={getText(`gallery_item_${photos[selectedPhotoIndex].id}_desc`)} editMode={editMode} className="text-xs text-cream/75 leading-relaxed" />
+            <EditableText as="h3" page="gallery" contentKey={`gallery_item_${formattedPhotos[selectedPhotoIndex].id}_title`} defaultText={formattedPhotos[selectedPhotoIndex].title} currentText={getText(`gallery_item_${formattedPhotos[selectedPhotoIndex].id}_title`)} editMode={editMode} className="font-serif text-xl font-bold text-cream" />
+            <EditableText as="p" page="gallery" contentKey={`gallery_item_${formattedPhotos[selectedPhotoIndex].id}_desc`} defaultText={formattedPhotos[selectedPhotoIndex].desc} currentText={getText(`gallery_item_${formattedPhotos[selectedPhotoIndex].id}_desc`)} editMode={editMode} className="text-xs text-cream/75 leading-relaxed" />
           </div>
         </div>
       )}
