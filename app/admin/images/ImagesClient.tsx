@@ -24,7 +24,7 @@ import { defaultRooms } from '@/lib/defaultRooms';
 const MAIN_CATEGORIES = ['Rooms', 'Garden & Terrace', 'Views', 'Pokhara'];
 const ROOM_CATEGORIES = ['Room', 'Washroom', 'View'];
 
-const uploadFileDirectToCloudinary = async (
+async function uploadFileDirectToCloudinary(
   file: File,
   resourceType: 'image' | 'video' | 'auto' = 'auto',
   onProgress?: (percent: number) => void
