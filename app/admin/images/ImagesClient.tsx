@@ -272,6 +272,14 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
   const handleVideoFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
+
+    const maxSizeBytes = 104857600; // 100 MB Cloudinary limit
+    if (file.size > maxSizeBytes) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setUploadError(`⚠️ File size is ${sizeMb} MB. Cloudinary free storage limit is 100 MB max per file. Please compress or trim your video slightly under 100 MB before uploading.`);
+      return;
+    }
+
     setIsVideoUploading(true);
     setVideoSuccessMsg('');
     setUploadError('');
@@ -621,7 +629,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                         />
                       </div>
                     )}
-                    <p className="text-xs text-cream/50 mt-1">Supports .mp4, .mov, .webm (drag & drop supported)</p>
+                    <p className="text-xs text-cream/50 mt-1">Supports .mp4, .mov, .webm (Max 100 MB per file)</p>
                   </div>
                 </div>
 
