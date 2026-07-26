@@ -30,9 +30,39 @@ async function uploadFileDirectToCloudinary(
   onProgress?: (percent: number) => void
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
-    const CHUNK_SIZE = 2.5 * 1024 * 1024; // 2.5 MB per chunk
+    // 1. Get signed authorization params from server
+    const sigRes = await getCloudinarySignature();
+    if (!sigRes.success || !sigRes.signature || !sigRes.apiKey || !sigRes.cloudName) {
+      return { success: false, error: sigRes.error || 'Failed to get Cloudinary signature' };
+    }
+
+    // Single chunk upload for small files under 6MB
+    if (file.size <= 6 * 1024 * 1024) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sigRes.apiKey);
+      formData.append('timestamp', String(sigRes.timestamp));
+      formData.append('signature', sigRes.signature);
+      formData.append('folder', sigRes.folder!);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${sigRes.cloudName}/${resourceType}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (res.ok && json.secure_url) {
+        if (onProgress) onProgress(100);
+        return { success: true, url: json.secure_url };
+      }
+      return { success: false, error: json.error?.message || 'Upload failed' };
+    }
+
+    // Official Cloudinary Native Chunked REST API for large files (> 6MB)
+    const uniqueUploadId = `uq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const CHUNK_SIZE = 6 * 1024 * 1024; // 6 MB chunks per Cloudinary docs
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-    const uploadId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    let finalUrl = '';
 
     for (let i = 0; i < totalChunks; i++) {
       const start = i * CHUNK_SIZE;
@@ -40,19 +70,26 @@ async function uploadFileDirectToCloudinary(
       const chunk = file.slice(start, end);
 
       const formData = new FormData();
-      formData.append('chunk', chunk, file.name);
-      formData.append('chunkIndex', String(i));
-      formData.append('totalChunks', String(totalChunks));
-      formData.append('uploadId', uploadId);
+      formData.append('file', chunk);
+      formData.append('api_key', sigRes.apiKey!);
+      formData.append('timestamp', String(sigRes.timestamp!));
+      formData.append('signature', sigRes.signature!);
+      formData.append('folder', sigRes.folder!);
 
-      const res = await fetch('/api/upload-chunk', {
+      const headers: Record<string, string> = {
+        'X-Unique-Upload-Id': uniqueUploadId,
+        'Content-Range': `bytes ${start}-${end - 1}/${file.size}`,
+      };
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${sigRes.cloudName}/${resourceType}/upload`, {
         method: 'POST',
+        headers,
         body: formData,
       });
 
       const json = await res.json();
-      if (!res.ok || !json.success) {
-        return { success: false, error: json.error || `Chunk ${i + 1} upload failed` };
+      if (!res.ok || json.error) {
+        return { success: false, error: json.error?.message || `Chunk ${i + 1}/${totalChunks} upload failed` };
       }
 
       if (onProgress) {
@@ -60,14 +97,18 @@ async function uploadFileDirectToCloudinary(
         onProgress(percent);
       }
 
-      if (json.complete && json.url) {
-        return { success: true, url: json.url };
+      if (json.secure_url) {
+        finalUrl = json.secure_url;
       }
     }
 
-    return { success: false, error: 'Chunk upload incomplete' };
+    if (finalUrl) {
+      return { success: true, url: finalUrl };
+    }
+
+    return { success: false, error: 'Video upload completed but no URL was returned' };
   } catch (err: any) {
-    return { success: false, error: err.message || 'Direct upload error' };
+    return { success: false, error: err.message || 'Direct Cloudinary upload error' };
   }
 }
 
