@@ -442,7 +442,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                             : 'bg-black/30 text-cream/60 hover:text-white border border-white/5'
                         }`}
                       >
-                        {room.title}
+                        {room.name || room.title || room.roomName || room.id}
                       </button>
                     ))}
                   </div>
