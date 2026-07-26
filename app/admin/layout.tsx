@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/12312341');
+        router.push(`/12312341?redirect=${encodeURIComponent(pathname)}`);
       } else {
         setIsAuthenticated(true);
         setUserEmail(session.user.email || '');

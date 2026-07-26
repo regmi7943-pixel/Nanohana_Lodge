@@ -236,7 +236,7 @@ export async function sendBookingRequestEmail(data: {
     ` : ''}
 
     <div style="text-align: center; margin-top: 30px;">
-      <a href="${process.env.APP_URL || 'http://localhost:3000'}/admin/booking-requests" style="${btnStyles} display: inline-block; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 24px;">Manage Requests Dashboard</a>
+      <a href="${(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://nanohanalodge.com.np').replace(/\/$/, '')}/admin/booking-requests" style="${btnStyles} display: inline-block; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 24px;">Manage Requests Dashboard</a>
     </div>
     `
   );
@@ -288,7 +288,7 @@ export async function sendBookingStatusEmail(req: {
       <p style="font-size: 13px; color: #4e504f;">We are located at <strong>Street No. 4, Lakeside, Pokhara</strong> (opposite the owner's family house). If you require private taxi pick-up service from the Pokhara Airport or bus station, please send us your arrival details by replying to this email.</p>
       
       <p style="margin-top: 25px;">We look forward to welcoming you to Pokhara!</p>
-      <p>Warm regards,<br/><strong>Rabin & the Nanohana Lodge Team</strong></p>
+      <p>Warm regards,<br/><strong>Nanohana Team</strong></p>
     `
     : `
       <h2 style="font-family: Georgia, serif; font-weight: normal; margin-top: 0; color: #aa3333; border-bottom: 1px solid #aa3333; padding-bottom: 10px;">Booking Request Status</h2>
@@ -303,7 +303,7 @@ export async function sendBookingStatusEmail(req: {
       <p>If your travel dates are flexible or if you are interested in a different room category, please reply to this email or send us a message via our contact form, and we will do our absolute best to find an alternative setup for you.</p>
       
       <p>Thank you for your understanding.</p>
-      <p>Warm regards,<br/><strong>Kul Bahadur & the Nanohana Lodge Team</strong></p>
+      <p>Warm regards,<br/><strong>Nanohana Team</strong></p>
     `;
 
   const finalHtml = wrapLayout(

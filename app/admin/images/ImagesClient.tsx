@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, Link2, Check, Loader2, X, Trash2, Images } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, Link2, Check, Loader2, X, Trash2, Images, Video, Film } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { uploadImage, getUploadedImages } from '@/app/actions/uploadImage';
 import { updateContent } from '@/app/actions/updateContent';
@@ -38,8 +38,15 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
   const [uploadError, setUploadError] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeManager, setActiveManager] = useState<'main' | 'rooms'>('main');
+  const [activeManager, setActiveManager] = useState<'main' | 'rooms' | 'video'>('main');
+
+  // Video Manager State
+  const currentVideoUrl = content.find((c: any) => c.key === 'home_video_url')?.value || '/nanohana-video.mp4';
+  const [customVideoUrlInput, setCustomVideoUrlInput] = useState(currentVideoUrl);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [videoSuccessMsg, setVideoSuccessMsg] = useState('');
 
   // Main Gallery State
   const [selectedMainCategory, setSelectedMainCategory] = useState(MAIN_CATEGORIES[0]);
@@ -173,6 +180,49 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
 
   const currentRoomGallery = getRoomGallery(selectedRoom).filter((img: any) => img.category === selectedRoomCategory);
 
+  const handleVideoFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    setIsVideoUploading(true);
+    setVideoSuccessMsg('');
+    setUploadError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const result = await uploadImage(formData);
+
+      if (result.success && result.url) {
+        await updateContent('home', 'home_video_url', result.url);
+        setCustomVideoUrlInput(result.url);
+        setVideoSuccessMsg('Walkthrough Video updated successfully via Cloudinary!');
+        router.refresh();
+      } else {
+        setUploadError(result.error || 'Video upload failed. Please try again.');
+      }
+    } catch (err: any) {
+      setUploadError(err.message || 'Error uploading video file.');
+    } finally {
+      setIsVideoUploading(false);
+    }
+  };
+
+  const handleSaveVideoUrl = async () => {
+    if (!customVideoUrlInput.trim()) return;
+    setIsVideoUploading(true);
+    setVideoSuccessMsg('');
+    setUploadError('');
+    try {
+      await updateContent('home', 'home_video_url', customVideoUrlInput.trim());
+      setVideoSuccessMsg('Walkthrough Video URL saved successfully!');
+      router.refresh();
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to update video URL.');
+    } finally {
+      setIsVideoUploading(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl space-y-8 pb-20">
       <div>
@@ -183,26 +233,37 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
       <div className="animate-fade-in max-w-4xl mx-auto space-y-8">
         
         {/* Manager Selection Tabs */}
-        <div className="flex bg-black/40 p-1.5 rounded-full border border-white/10 w-fit mx-auto">
+        <div className="flex bg-black/40 p-1.5 rounded-full border border-white/10 w-fit mx-auto flex-wrap justify-center gap-1">
           <button
             onClick={() => setActiveManager('main')}
-            className={`px-8 py-3 rounded-full text-sm font-semibold transition-all ${
+            className={`px-6 py-3 rounded-full text-sm font-semibold transition-all ${
               activeManager === 'main' 
                 ? 'bg-nanohana text-earth shadow-md' 
                 : 'text-cream/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            Public Gallery Manager
+            Public Gallery
           </button>
           <button
             onClick={() => setActiveManager('rooms')}
-            className={`px-8 py-3 rounded-full text-sm font-semibold transition-all ${
+            className={`px-6 py-3 rounded-full text-sm font-semibold transition-all ${
               activeManager === 'rooms' 
                 ? 'bg-nanohana text-earth shadow-md' 
                 : 'text-cream/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            Room Photos Manager
+            Room Photos
+          </button>
+          <button
+            onClick={() => setActiveManager('video')}
+            className={`px-6 py-3 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+              activeManager === 'video' 
+                ? 'bg-nanohana text-earth shadow-md' 
+                : 'text-cream/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Video className="w-4 h-4" />
+            Walkthrough Video
           </button>
         </div>
 
@@ -303,41 +364,40 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
             </motion.div>
           )}
 
+          {/* ROOM PHOTOS MANAGER */}
           {activeManager === 'rooms' && (
             <motion.div key="rooms" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
-              {/* Room Selection Dropdown/Cards */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-sm font-mono uppercase tracking-widest text-cream/50 mb-4">1. Select Room</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {DB_ROOMS.map((room: any) => (
-                    <button
-                      key={room.id}
-                      onClick={() => setSelectedRoom(room.id)}
-                      className={`px-4 py-3 text-sm rounded-xl font-medium transition-all text-center border ${
-                        selectedRoom === room.id 
-                          ? 'bg-nanohana text-earth border-nanohana shadow-md scale-105' 
-                          : 'bg-black/20 text-cream/70 border-white/10 hover:border-white/30 hover:bg-black/40'
-                      }`}
-                    >
-                      {room.name}
-                    </button>
-                  ))}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
+                <div>
+                  <h2 className="text-sm font-mono uppercase tracking-widest text-cream/50 mb-3">1. Select Room</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {DB_ROOMS.map((room: any) => (
+                      <button
+                        key={room.id}
+                        onClick={() => setSelectedRoom(room.id)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          selectedRoom === room.id 
+                            ? 'bg-nanohana text-earth shadow-md' 
+                            : 'bg-black/30 text-cream/60 hover:text-white border border-white/5'
+                        }`}
+                      >
+                        {room.title}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Category Tabs */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                  <h2 className="text-sm font-mono uppercase tracking-widest text-cream/50">2. Edit Gallery</h2>
-                  <div className="flex bg-black/40 p-1 rounded-full border border-white/10">
+                <div>
+                  <h2 className="text-sm font-mono uppercase tracking-widest text-cream/50 mb-3">2. Select Category</h2>
+                  <div className="flex gap-2">
                     {ROOM_CATEGORIES.map(cat => (
                       <button
                         key={cat}
                         onClick={() => setSelectedRoomCategory(cat)}
-                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${
+                        className={`px-5 py-2 rounded-lg text-xs font-semibold transition-all ${
                           selectedRoomCategory === cat 
                             ? 'bg-phewa text-cream shadow-sm' 
-                            : 'text-cream/60 hover:text-white'
+                            : 'bg-black/30 text-cream/60 hover:text-white border border-white/5'
                         }`}
                       >
                         {cat}
@@ -346,7 +406,6 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                   </div>
                 </div>
 
-                {/* Upload & Grid */}
                 <div className="space-y-6">
                   {/* Upload Zone */}
                   <div
@@ -402,6 +461,83 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                       <p className="text-xs mt-1">The live site will use default placeholders.</p>
                     </div>
                   )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* WALKTHROUGH VIDEO MANAGER */}
+          {activeManager === 'video' && (
+            <motion.div key="video" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Film className="w-5 h-5 text-nanohana" />
+                    <h2 className="text-lg font-serif font-bold text-white">Homepage Walkthrough Video</h2>
+                  </div>
+                  <p className="text-xs text-cream/60">
+                    Upload an MP4 / video file directly to Cloudinary or paste a video URL. This video displays in the interactive modal on the homepage.
+                  </p>
+                </div>
+
+                {/* Status Messages */}
+                {videoSuccessMsg ? (
+                  <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 p-4 rounded-xl text-xs font-semibold flex items-center gap-2">
+                    <Check className="w-4 h-4 flex-shrink-0" />
+                    <span>{videoSuccessMsg}</span>
+                  </div>
+                ) : null}
+
+                {uploadError ? (
+                  <div className="bg-red-500/20 border border-red-500/40 text-red-300 p-4 rounded-xl text-xs font-semibold flex items-center gap-2">
+                    <X className="w-4 h-4 flex-shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                ) : null}
+
+                {/* Cloudinary Video Dropzone */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragOver(false); handleVideoFileUpload(e.dataTransfer.files); }}
+                  onClick={() => videoInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all ${
+                    dragOver ? 'border-nanohana bg-nanohana/10' : 'border-white/15 bg-black/30 hover:bg-black/50 hover:border-white/30'
+                  }`}
+                >
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => handleVideoFileUpload(e.target.files)}
+                  />
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isVideoUploading ? 'bg-nanohana text-earth' : 'bg-white/10 text-cream'}`}>
+                    {isVideoUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <UploadCloud className="w-6 h-6" />}
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-bold text-white">
+                      {isVideoUploading ? 'Uploading video to Cloudinary...' : 'Click to Upload Video File (Cloudinary)'}
+                    </h3>
+                    <p className="text-xs text-cream/50 mt-1">Supports .mp4, .mov, .webm (drag & drop supported)</p>
+                  </div>
+                </div>
+
+
+
+                {/* Video Preview */}
+                <div className="pt-4 space-y-3">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-cream/50">Current Video Live Preview</h3>
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black border border-white/10 relative">
+                    <video
+                      key={currentVideoUrl}
+                      src={currentVideoUrl}
+                      controls
+                      className="w-full h-full object-contain"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
                 </div>
               </div>
             </motion.div>

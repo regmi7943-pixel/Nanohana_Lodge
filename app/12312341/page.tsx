@@ -1,17 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
-export default function SecretLoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/admin';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +30,7 @@ export default function SecretLoginPage() {
       setError('Incorrect email or password.');
       setLoading(false);
     } else {
-      router.push('/admin');
+      router.push(redirectTo);
     }
   };
 
@@ -102,5 +104,17 @@ export default function SecretLoginPage() {
         </form>
       </motion.div>
     </div>
+  );
+}
+
+export default function SecretLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-earth flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-nanohana animate-spin" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

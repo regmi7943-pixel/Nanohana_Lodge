@@ -23,9 +23,9 @@ export async function uploadImage(formData: FormData) {
   }
 
   try {
-    // Basic MIME type validation
-    if (!file.type.startsWith('image/')) {
-      return { error: 'Only image files are allowed' };
+    // MIME type validation for images and videos
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      return { error: 'Only image and video files are allowed' };
     }
 
     // Convert the file to a buffer for cloudinary upload

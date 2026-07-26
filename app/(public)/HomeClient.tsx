@@ -502,7 +502,7 @@ export default function HomeClient({ content = [], editMode = false }: { content
           <div className="relative bg-black rounded-xl max-w-5xl w-full overflow-hidden shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setIsVideoOpen(false)} className="absolute top-4 right-4 text-white hover:text-cream/70 p-2 z-10 transition-colors" aria-label="Close Video"><X className="w-6 h-6" strokeWidth={1} /></button>
             <div className="w-full aspect-video bg-black flex items-center justify-center relative">
-              <video className="w-full h-full object-contain" controls autoPlay playsInline src="/nanohana-video.mp4">Your browser does not support the video tag.</video>
+              <video key={getText('home_video_url') || 'default-video'} className="w-full h-full object-contain" controls autoPlay playsInline src={getText('home_video_url') || "/nanohana-video.mp4"}>Your browser does not support the video tag.</video>
             </div>
           </div>
         </div>

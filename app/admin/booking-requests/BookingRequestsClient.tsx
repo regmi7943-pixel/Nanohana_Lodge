@@ -160,7 +160,100 @@ export default function BookingRequestsClient({ content = [] }: { content?: any[
         </div>
       </div>
 
-      <div className="bg-[#1a1a1a] border border-white/10 rounded-lg overflow-x-auto">
+      {/* Mobile Card List (Visible on Mobile Only) */}
+      <div className="block md:hidden space-y-4">
+        {filteredRequests.map((req) => (
+          <div key={req.id} className="bg-[#1a1a1a] border border-white/10 rounded-xl p-5 space-y-4 shadow-lg">
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+              <div>
+                <span className="font-mono text-[10px] text-cream/40 uppercase tracking-wider">ID: {req.id}</span>
+                <h3 className="font-bold text-white text-base mt-0.5">{req.guestName}</h3>
+                <p className="text-xs text-nanohana font-medium mt-0.5">{req.email}</p>
+                {req.phone && <p className="text-xs text-cream/50 mt-0.5">📞 {req.phone}</p>}
+              </div>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold border ${
+                req.status === 'Confirmed' 
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  : req.status === 'Rejected'
+                  ? 'bg-red-500/20 text-red-300 border-red-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+              }`}>
+                {req.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-white/5 p-3 rounded-lg border border-white/5">
+                <span className="text-cream/40 block text-[10px] uppercase font-mono mb-1">Room Category</span>
+                <span className="font-semibold text-cream">{req.roomType}</span>
+              </div>
+              <div className="bg-white/5 p-3 rounded-lg border border-white/5">
+                <span className="text-cream/40 block text-[10px] uppercase font-mono mb-1">Total Stay Price</span>
+                <span className="font-bold text-nanohana text-sm">${req.totalPrice}</span>
+              </div>
+            </div>
+
+            <div className="bg-white/5 p-3 rounded-lg border border-white/5 text-xs space-y-1">
+              <div className="flex justify-between text-cream/70">
+                <span>Check-in: <strong className="text-cream">{req.checkIn}</strong></span>
+                <span>Check-out: <strong className="text-cream">{req.checkOut}</strong></span>
+              </div>
+              <div className="text-cream/50 text-[11px] pt-1 border-t border-white/5 flex justify-between">
+                <span>{req.guestsCount} Guest(s)</span>
+                <span>{req.roomsCount || 1} Room(s)</span>
+              </div>
+            </div>
+
+            {/* Mobile Touch Action Buttons */}
+            {req.status === 'Pending' ? (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  onClick={() => handleAction(req.id, 'Confirmed')}
+                  disabled={processingId === req.id}
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-md disabled:opacity-50"
+                >
+                  {processingId === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  Confirm Booking
+                </button>
+
+                <button
+                  onClick={() => handleAction(req.id, 'Rejected')}
+                  disabled={processingId === req.id}
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 hover:bg-red-500/20 text-cream/80 hover:text-red-300 font-bold text-xs transition-colors border border-white/10 disabled:opacity-50"
+                >
+                  {processingId === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                  Reject Request
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between pt-1 text-xs">
+                <span className="text-cream/40 italic">Actioned</span>
+                {req.status === 'Rejected' && (
+                  <button
+                    onClick={() => handleDelete(req.id)}
+                    disabled={processingId === req.id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors font-medium text-xs disabled:opacity-50"
+                  >
+                    {processingId === req.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Delete Request
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {filteredRequests.length === 0 && (
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-8 text-center space-y-3">
+            <CalendarX className="w-10 h-10 text-cream/30 mx-auto" />
+            <p className="text-cream/80 font-serif font-medium">No Booking Requests</p>
+            <p className="text-cream/40 text-xs">There are currently no booking requests matching your filters.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View (Hidden on Mobile) */}
+      <div className="hidden md:block bg-[#1a1a1a] border border-white/10 rounded-lg overflow-x-auto">
         <table className="w-full text-left text-sm text-cream">
           <thead className="bg-white/5 border-b border-white/10 text-cream/70 text-xs uppercase tracking-wider font-mono">
             <tr>
