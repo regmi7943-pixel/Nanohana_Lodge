@@ -71,6 +71,40 @@ export async function uploadImage(formData: FormData) {
   }
 }
 
+export async function getCloudinarySignature() {
+  try {
+    await requireAuth();
+  } catch (err: any) {
+    return { error: 'Unauthorized' };
+  }
+
+  try {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const folder = 'nanohana-lodge';
+    const paramsToSign = {
+      timestamp,
+      folder,
+    };
+
+    const signature = cloudinary.utils.api_sign_request(
+      paramsToSign,
+      process.env.CLOUDINARY_API_SECRET!
+    );
+
+    return {
+      success: true,
+      timestamp,
+      signature,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
+      folder,
+    };
+  } catch (error: any) {
+    console.error('Cloudinary signature error:', error);
+    return { error: error.message || 'Failed to generate signature' };
+  }
+}
+
 export async function getUploadedImages() {
   try {
     await requireAuth();

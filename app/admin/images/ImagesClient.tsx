@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadCloud, Image as ImageIcon, Link2, Check, Loader2, X, Trash2, Images, Video, Film } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { uploadImage, getUploadedImages } from '@/app/actions/uploadImage';
+import { uploadImage, getUploadedImages, getCloudinarySignature } from '@/app/actions/uploadImage';
 import { updateContent } from '@/app/actions/updateContent';
 import { Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,63 @@ import { defaultRooms } from '@/lib/defaultRooms';
 
 const MAIN_CATEGORIES = ['Rooms', 'Garden & Terrace', 'Views', 'Pokhara'];
 const ROOM_CATEGORIES = ['Room', 'Washroom', 'View'];
+
+const uploadFileDirectToCloudinary = async (
+  file: File,
+  resourceType: 'image' | 'video' | 'auto' = 'auto',
+  onProgress?: (percent: number) => void
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const sigRes = await getCloudinarySignature();
+    if (!sigRes.success || !sigRes.signature || !sigRes.apiKey || !sigRes.cloudName) {
+      return { success: false, error: sigRes.error || 'Failed to get Cloudinary signature' };
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', sigRes.apiKey);
+    formData.append('timestamp', String(sigRes.timestamp));
+    formData.append('signature', sigRes.signature);
+    formData.append('folder', sigRes.folder!);
+
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${sigRes.cloudName}/${resourceType}/upload`;
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable && onProgress) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          onProgress(percent);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300 && response.secure_url) {
+            resolve({ success: true, url: response.secure_url });
+          } else {
+            resolve({
+              success: false,
+              error: response.error?.message || `Cloudinary upload failed (HTTP ${xhr.status})`,
+            });
+          }
+        } catch (err: any) {
+          resolve({ success: false, error: 'Failed to parse upload response' });
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        resolve({ success: false, error: 'Network error during Cloudinary upload' });
+      });
+
+      xhr.open('POST', uploadUrl);
+      xhr.send(formData);
+    });
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Direct upload error' };
+  }
+};
 
 export default function ImagesClient({ content = [] }: { content?: any[] }) {
   const router = useRouter();
@@ -47,6 +104,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
   const [customVideoUrlInput, setCustomVideoUrlInput] = useState(currentVideoUrl);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
   const [videoSuccessMsg, setVideoSuccessMsg] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Main Gallery State
   const [selectedMainCategory, setSelectedMainCategory] = useState(MAIN_CATEGORIES[0]);
@@ -186,11 +244,13 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
     setIsVideoUploading(true);
     setVideoSuccessMsg('');
     setUploadError('');
+    setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const result = await uploadImage(formData);
+      // Use direct client-side upload to Cloudinary to bypass Vercel/Next.js 4.5MB server payload limits
+      const result = await uploadFileDirectToCloudinary(file, 'video', (percent) => {
+        setUploadProgress(percent);
+      });
 
       if (result.success && result.url) {
         await updateContent('home', 'home_video_url', result.url);
@@ -204,6 +264,7 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
       setUploadError(err.message || 'Error uploading video file.');
     } finally {
       setIsVideoUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -515,10 +576,20 @@ export default function ImagesClient({ content = [] }: { content?: any[] }) {
                   <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isVideoUploading ? 'bg-nanohana text-earth' : 'bg-white/10 text-cream'}`}>
                     {isVideoUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <UploadCloud className="w-6 h-6" />}
                   </div>
-                  <div className="text-center">
+                  <div className="text-center w-full max-w-xs">
                     <h3 className="text-sm font-bold text-white">
-                      {isVideoUploading ? 'Uploading video to Cloudinary...' : 'Click to Upload Video File (Cloudinary)'}
+                      {isVideoUploading 
+                        ? `Uploading video to Cloudinary... ${uploadProgress > 0 ? `${uploadProgress}%` : ''}` 
+                        : 'Click to Upload Video File (Cloudinary)'}
                     </h3>
+                    {isVideoUploading && uploadProgress > 0 && (
+                      <div className="w-full bg-white/10 h-2 rounded-full mt-3 overflow-hidden">
+                        <div 
+                          className="bg-nanohana h-full rounded-full transition-all duration-200" 
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    )}
                     <p className="text-xs text-cream/50 mt-1">Supports .mp4, .mov, .webm (drag & drop supported)</p>
                   </div>
                 </div>
