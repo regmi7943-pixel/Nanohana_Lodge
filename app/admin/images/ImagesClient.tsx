@@ -30,56 +30,46 @@ async function uploadFileDirectToCloudinary(
   onProgress?: (percent: number) => void
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
-    const sigRes = await getCloudinarySignature();
-    if (!sigRes.success || !sigRes.signature || !sigRes.apiKey || !sigRes.cloudName) {
-      return { success: false, error: sigRes.error || 'Failed to get Cloudinary signature' };
+    const CHUNK_SIZE = 2.5 * 1024 * 1024; // 2.5 MB per chunk
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const uploadId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(file.size, start + CHUNK_SIZE);
+      const chunk = file.slice(start, end);
+
+      const formData = new FormData();
+      formData.append('chunk', chunk, file.name);
+      formData.append('chunkIndex', String(i));
+      formData.append('totalChunks', String(totalChunks));
+      formData.append('uploadId', uploadId);
+
+      const res = await fetch('/api/upload-chunk', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        return { success: false, error: json.error || `Chunk ${i + 1} upload failed` };
+      }
+
+      if (onProgress) {
+        const percent = Math.round(((i + 1) / totalChunks) * 100);
+        onProgress(percent);
+      }
+
+      if (json.complete && json.url) {
+        return { success: true, url: json.url };
+      }
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('api_key', sigRes.apiKey);
-    formData.append('timestamp', String(sigRes.timestamp));
-    formData.append('signature', sigRes.signature);
-    formData.append('folder', sigRes.folder!);
-
-    return new Promise((resolve) => {
-      const xhr = new XMLHttpRequest();
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${sigRes.cloudName}/${resourceType}/upload`;
-
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable && onProgress) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          onProgress(percent);
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && response.secure_url) {
-            resolve({ success: true, url: response.secure_url });
-          } else {
-            resolve({
-              success: false,
-              error: response.error?.message || `Cloudinary upload failed (HTTP ${xhr.status})`,
-            });
-          }
-        } catch (err: any) {
-          resolve({ success: false, error: 'Failed to parse upload response' });
-        }
-      });
-
-      xhr.addEventListener('error', () => {
-        resolve({ success: false, error: 'Network error during Cloudinary upload' });
-      });
-
-      xhr.open('POST', uploadUrl);
-      xhr.send(formData);
-    });
+    return { success: false, error: 'Chunk upload incomplete' };
   } catch (err: any) {
     return { success: false, error: err.message || 'Direct upload error' };
   }
-};
+}
 
 export default function ImagesClient({ content = [] }: { content?: any[] }) {
   const router = useRouter();
