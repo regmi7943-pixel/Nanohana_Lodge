@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Image as ImageIcon, CalendarDays, Type, LogOut, Loader2, Bed, Inbox, Settings } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, CalendarDays, Type, LogOut, Loader2, Bed, Inbox, Settings, DollarSign } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -42,6 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/rooms', icon: Bed, label: 'Room Manager' },
+    { href: '/admin/fare-management', icon: DollarSign, label: 'Fare Management' },
     { href: '/admin/images', icon: ImageIcon, label: 'Image Manager' },
     { href: '/admin/bookings', icon: CalendarDays, label: 'Booking Manager' },
     { href: '/admin/booking-requests', icon: Inbox, label: 'Booking Requests Manager' },

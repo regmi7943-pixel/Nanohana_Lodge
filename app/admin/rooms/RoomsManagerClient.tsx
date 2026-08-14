@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Bed, Plus, Trash2, Save, UploadCloud, X, Edit, Loader2, Star, CheckCircle, ChevronDown, Settings } from 'lucide-react';
+import { Bed, Plus, Trash2, Save, UploadCloud, X, Edit, Loader2, Star, CheckCircle, ChevronDown, Settings, Sparkles } from 'lucide-react';
 import { defaultRooms } from '@/lib/defaultRooms';
 import { updateContent } from '@/app/actions/updateContent';
 import { uploadImage } from '@/app/actions/uploadImage';
@@ -78,6 +78,27 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
   });
   const [editingRoom, setEditingRoom] = useState<any | null>(null);
   const [pricingRoom, setPricingRoom] = useState<any | null>(null);
+
+  // Parse seasonal fares from global content to display in dynamic pricing modal
+  const seasonalFares = React.useMemo(() => {
+    try {
+      const raw = content.find((c: any) => c.key === 'seasonal_fares')?.value;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed.filter((s: any) => s.isActive);
+      }
+    } catch (e) {}
+    return [];
+  }, [content]);
+
+  // Compute active seasons covering current room category
+  const activeSeasonsForRoomCategory = React.useMemo(() => {
+    if (!pricingRoom || seasonalFares.length === 0) return [];
+    const cat = pricingRoom.category || 'Standard';
+    return seasonalFares.filter((s: any) => {
+      return s.categoryFares && s.categoryFares[cat] && Array.isArray(s.categoryFares[cat]) && s.categoryFares[cat].length > 0;
+    });
+  }, [pricingRoom, seasonalFares]);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -428,6 +449,18 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
               </div>
 
               <div className="p-6 space-y-6">
+                {activeSeasonsForRoomCategory.length > 0 && (
+                  <div className="bg-nanohana/15 border border-nanohana/30 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-white">
+                    <div className="flex items-center gap-2 font-medium">
+                      <Sparkles className="w-4 h-4 text-nanohana flex-shrink-0" />
+                      <span><strong>Seasonal Fare Applied:</strong> {activeSeasonsForRoomCategory.map((s: any) => s.name).join(', ')}</span>
+                    </div>
+                    <span className="font-mono text-nanohana font-semibold text-[11px] bg-black/40 px-2.5 py-1 rounded-lg border border-nanohana/20">
+                      {activeSeasonsForRoomCategory.map((s: any) => `${s.startDate} → ${s.endDate}`).join(', ')}
+                    </span>
+                  </div>
+                )}
+
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                   <div className="flex items-center justify-between mb-4">
                     <label className="text-sm font-mono uppercase tracking-widest text-cream/70">Traveller Tiers</label>
@@ -440,25 +473,54 @@ export default function RoomsManagerClient({ content = [] }: { content?: any[] }
                     {(!pricingRoom.pricingConfig || pricingRoom.pricingConfig.length === 0) && (
                       <p className="text-sm text-cream/40 text-center py-4">No dynamic pricing tiers set. The room will use the default base price.</p>
                     )}
-                    {(pricingRoom.pricingConfig || []).map((tier: any, i: number) => (
-                      <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-black/40 p-3 rounded-xl border border-white/5">
-                        <div className="flex-1 w-full">
-                          <label className="text-[10px] uppercase text-cream/40 ml-1">Dropdown Label</label>
-                          <input type="text" value={tier.label} onChange={e => handleUpdatePricingTier(i, 'label', e.target.value)} placeholder="e.g. 1 Adult" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    {(pricingRoom.pricingConfig || []).map((tier: any, i: number) => {
+                      const seasonalOverridesForTier = activeSeasonsForRoomCategory.map((season: any) => {
+                        const catTiers = season.categoryFares?.[pricingRoom.category] || [];
+                        const match = catTiers.find((t: any) => Number(t.guests) === Number(tier.guests));
+                        if (match && match.price) {
+                          return {
+                            seasonName: season.name,
+                            price: match.price,
+                            startDate: season.startDate,
+                            endDate: season.endDate
+                          };
+                        }
+                        return null;
+                      }).filter(Boolean);
+
+                      return (
+                        <div key={i} className="flex flex-col bg-black/40 p-3.5 rounded-xl border border-white/5 space-y-2">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <div className="flex-1 w-full">
+                              <label className="text-[10px] uppercase text-cream/40 ml-1">Dropdown Label</label>
+                              <input type="text" value={tier.label} onChange={e => handleUpdatePricingTier(i, 'label', e.target.value)} placeholder="e.g. 1 Adult" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                            </div>
+                            <div className="w-28 flex-shrink-0">
+                              <label className="text-[10px] uppercase text-cream/40 ml-1" title="Used to calculate booking costs behind the scenes">Num Guests</label>
+                              <input type="number" value={tier.guests || ''} onChange={e => handleUpdatePricingTier(i, 'guests', e.target.value ? parseInt(e.target.value) : '')} placeholder="1" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" title="Used to calculate booking costs behind the scenes" />
+                            </div>
+                            <div className="w-28 flex-shrink-0">
+                              <label className="text-[10px] uppercase text-cream/40 ml-1">Base Price</label>
+                              <input type="text" value={tier.price} onChange={e => handleUpdatePricingTier(i, 'price', e.target.value)} placeholder="$12" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana text-white font-bold rounded-lg px-3 py-2 text-sm outline-none" />
+                            </div>
+                            <button onClick={() => handleRemovePricingTier(i)} className="mt-4 sm:mt-5 p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {seasonalOverridesForTier.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/5">
+                              {seasonalOverridesForTier.map((sp: any, idx: number) => (
+                                <span key={idx} className="text-xs font-sans bg-nanohana/15 text-nanohana border border-nanohana/30 px-3 py-1 rounded-lg flex items-center gap-1.5">
+                                  <Sparkles className="w-3.5 h-3.5 text-nanohana" />
+                                  <span>Active Season Rate: <strong>{sp.price}</strong> ({sp.seasonName})</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className="w-28 flex-shrink-0">
-                          <label className="text-[10px] uppercase text-cream/40 ml-1" title="Used to calculate booking costs behind the scenes">Num Guests</label>
-                          <input type="number" value={tier.guests || ''} onChange={e => handleUpdatePricingTier(i, 'guests', e.target.value ? parseInt(e.target.value) : '')} placeholder="1" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana rounded-lg px-3 py-2 text-sm text-white outline-none" title="Used to calculate booking costs behind the scenes" />
-                        </div>
-                        <div className="w-28 flex-shrink-0">
-                          <label className="text-[10px] uppercase text-cream/40 ml-1">Price</label>
-                          <input type="text" value={tier.price} onChange={e => handleUpdatePricingTier(i, 'price', e.target.value)} placeholder="$12" className="w-full bg-white/5 border border-transparent hover:border-white/10 focus:border-nanohana text-nanohana font-bold rounded-lg px-3 py-2 text-sm outline-none" />
-                        </div>
-                        <button onClick={() => handleRemovePricingTier(i)} className="mt-4 sm:mt-5 p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

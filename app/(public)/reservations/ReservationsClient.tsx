@@ -17,7 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   BedDouble,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import EditableText from '@/components/EditableText';
 import EditableImage from '@/components/EditableImage';
@@ -57,6 +58,15 @@ export default function ReservationsClient({ content = [], editMode = false }: {
     }
     return [];
   }, [rawRequests]);
+
+  // Load seasonal fares from global content
+  const rawSeasonalFares = content.find((c: any) => c.key === 'seasonal_fares')?.value;
+  const seasonalFares = React.useMemo(() => {
+    if (rawSeasonalFares) {
+      try { return JSON.parse(rawSeasonalFares); } catch (e) {}
+    }
+    return [];
+  }, [rawSeasonalFares]);
 
   const [bookingRequestsList, setBookingRequestsList] = useState<any[]>(initialRequestsList);
 
@@ -193,23 +203,205 @@ export default function ReservationsClient({ content = [], editMode = false }: {
   };
 
   const selectedRoomDetails = rooms.find((r: any) => r.id === selectedCatId);
-  
-  const getDynamicPrice = () => {
-    if (!selectedRoomDetails) return 12;
-    if (selectedRoomDetails.pricingConfig && selectedRoomDetails.pricingConfig.length > 0) {
-      const match = selectedRoomDetails.pricingConfig.find((t: any) => t.guests === guestsCount);
-      if (match) return parseInt(match.price.replace(/[^0-9.]/g, ''));
+
+  // Active Seasonal Fare lookup for check-in date
+  const activeSeasonalFare = React.useMemo(() => {
+    if (!checkInDate || seasonalFares.length === 0) return null;
+    const checkInStr = formatDate(checkInDate);
+    return [...seasonalFares]
+      .filter((s: any) => s.isActive && checkInStr >= s.startDate && checkInStr <= s.endDate)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
+  }, [checkInDate, seasonalFares]);
+
+  // Dynamic Tier Price resolution for Travelers Dropdown & Labels
+  const getEffectiveTierPrice = React.useCallback((guestsCountForTier: number) => {
+    if (!selectedRoomDetails) return '$12';
+    const category = selectedRoomDetails.category || 'Standard';
+    const targetDate = checkInDate || new Date();
+
+    if (seasonalFares.length > 0) {
+      const targetDateStr = formatDate(targetDate);
+      const matchingSeason = [...seasonalFares]
+        .filter((s: any) => s.isActive && targetDateStr >= s.startDate && targetDateStr <= s.endDate)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+      if (matchingSeason && matchingSeason.categoryFares && matchingSeason.categoryFares[category]) {
+        const catTiers = matchingSeason.categoryFares[category];
+        if (Array.isArray(catTiers) && catTiers.length > 0) {
+          const tierMatch = catTiers.find((t: any) => Number(t.guests) === Number(guestsCountForTier)) || catTiers[0];
+          if (tierMatch && tierMatch.price) {
+            const val = String(tierMatch.price).trim();
+            return val.startsWith('$') ? val : `$${val}`;
+          }
+        }
+      }
     }
-    return parseInt(selectedRoomDetails.price.replace(/[^0-9.]/g, '')) || 12;
+
+    if (selectedRoomDetails.pricingConfig && selectedRoomDetails.pricingConfig.length > 0) {
+      const match = selectedRoomDetails.pricingConfig.find((t: any) => Number(t.guests) === Number(guestsCountForTier));
+      if (match && match.price) {
+        const val = String(match.price).trim();
+        return val.startsWith('$') ? val : `$${val}`;
+      }
+    }
+
+    const baseVal = String(selectedRoomDetails.price || '$12').trim();
+    return baseVal.startsWith('$') ? baseVal : `$${baseVal}`;
+  }, [selectedRoomDetails, checkInDate, seasonalFares]);
+
+  // Derived Traveller Tiers with dynamic effective prices for dropdown
+  const travellerTierOptions = React.useMemo(() => {
+    if (selectedRoomDetails?.pricingConfig && selectedRoomDetails.pricingConfig.length > 0) {
+      return selectedRoomDetails.pricingConfig.map((tier: any) => ({
+        guests: Number(tier.guests),
+        label: tier.label,
+        effectivePrice: getEffectiveTierPrice(Number(tier.guests))
+      }));
+    }
+    return [
+      { guests: 1, label: '1 Adult', effectivePrice: getEffectiveTierPrice(1) },
+      { guests: 2, label: '2 Adults', effectivePrice: getEffectiveTierPrice(2) },
+      { guests: 3, label: '3 Adults / Family', effectivePrice: getEffectiveTierPrice(3) }
+    ];
+  }, [selectedRoomDetails, getEffectiveTierPrice]);
+
+  // MinStay Calculation
+  const { requiredMinStay, activeRuleName } = React.useMemo(() => {
+    if (!checkInDate) return { requiredMinStay: 1, activeRuleName: '' };
+    const checkInStr = formatDate(checkInDate);
+
+    const matchingSeason = seasonalFares.find((s: any) => s.isActive && checkInStr >= s.startDate && checkInStr <= s.endDate);
+    if (matchingSeason && matchingSeason.minStay && matchingSeason.minStay > 1) {
+      return { requiredMinStay: matchingSeason.minStay, activeRuleName: matchingSeason.name };
+    }
+
+    return { requiredMinStay: 1, activeRuleName: '' };
+  }, [checkInDate, seasonalFares]);
+
+  const stayNights = React.useMemo(() => {
+    if (!checkInDate || !checkOutDate) return 0;
+    const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+  }, [checkInDate, checkOutDate]);
+
+  const isMinStaySatisfied = stayNights === 0 || stayNights >= requiredMinStay;
+
+  // Helper to get effective nightly rate & rule details for any specific date
+  const getPriceDetailsForDate = React.useCallback((targetDate: Date) => {
+    if (!selectedRoomDetails) return { price: 12, ruleName: 'Base Rate', type: 'base' };
+    const category = selectedRoomDetails.category || 'Standard';
+    const targetDateStr = formatDate(targetDate);
+
+    // 1. Active Seasonal Fare matching target date
+    if (seasonalFares.length > 0) {
+      const matchingSeason = [...seasonalFares]
+        .filter((s: any) => s.isActive && targetDateStr >= s.startDate && targetDateStr <= s.endDate)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+      if (matchingSeason && matchingSeason.categoryFares && matchingSeason.categoryFares[category]) {
+        const catTiers = matchingSeason.categoryFares[category];
+        if (Array.isArray(catTiers) && catTiers.length > 0) {
+          const tierMatch = catTiers.find((t: any) => Number(t.guests) === guestsCount) || catTiers[0];
+          if (tierMatch && tierMatch.price) {
+            const seasonalPrice = parseInt(String(tierMatch.price).replace(/[^0-9.]/g, ''));
+            if (!isNaN(seasonalPrice) && seasonalPrice > 0) {
+              return { price: seasonalPrice, ruleName: matchingSeason.name, type: 'seasonal' };
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Base Room Tier / Price Fallback
+    if (selectedRoomDetails.pricingConfig && selectedRoomDetails.pricingConfig.length > 0) {
+      const match = selectedRoomDetails.pricingConfig.find((t: any) => Number(t.guests) === guestsCount);
+      if (match) {
+        const p = parseInt(match.price.replace(/[^0-9.]/g, ''));
+        return { price: !isNaN(p) && p > 0 ? p : 12, ruleName: 'Base Rate', type: 'base' };
+      }
+    }
+    const baseP = parseInt(selectedRoomDetails.price.replace(/[^0-9.]/g, '')) || 12;
+    return { price: baseP, ruleName: 'Base Rate', type: 'base' };
+  }, [selectedRoomDetails, seasonalFares, guestsCount]);
+
+  const getPriceForDate = React.useCallback((targetDate: Date) => {
+    return getPriceDetailsForDate(targetDate).price;
+  }, [getPriceDetailsForDate]);
+
+  const getDynamicPrice = () => {
+    return getPriceForDate(checkInDate || new Date());
   };
 
   const basePrice = getDynamicPrice();
 
+  // Multi-night Rate Breakdown segments calculation
+  const breakdownSegments = React.useMemo(() => {
+    if (!checkInDate || !checkOutDate) return [];
+
+    const curr = new Date(checkInDate);
+    curr.setHours(0, 0, 0, 0);
+
+    const end = new Date(checkOutDate);
+    end.setHours(0, 0, 0, 0);
+
+    const segments: Array<{
+      startDateStr: string;
+      endDateStr: string;
+      nights: number;
+      nightlyPrice: number;
+      ruleName: string;
+      type: string;
+      segmentTotal: number;
+    }> = [];
+
+    while (curr < end) {
+      const details = getPriceDetailsForDate(curr);
+      const currStr = formatDate(curr);
+
+      const lastSeg = segments[segments.length - 1];
+      if (lastSeg && lastSeg.nightlyPrice === details.price && lastSeg.ruleName === details.ruleName) {
+        lastSeg.nights += 1;
+        lastSeg.segmentTotal += details.price;
+        const nextDay = new Date(curr);
+        nextDay.setDate(nextDay.getDate() + 1);
+        lastSeg.endDateStr = formatDate(nextDay);
+      } else {
+        const nextDay = new Date(curr);
+        nextDay.setDate(nextDay.getDate() + 1);
+        segments.push({
+          startDateStr: currStr,
+          endDateStr: formatDate(nextDay),
+          nights: 1,
+          nightlyPrice: details.price,
+          ruleName: details.ruleName,
+          type: details.type,
+          segmentTotal: details.price
+        });
+      }
+
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    return segments;
+  }, [checkInDate, checkOutDate, getPriceDetailsForDate]);
+
+  // Sum rate per individual night across seasonal boundaries
   const getCalculatedPrice = () => {
-    if (!checkInDate || !checkOutDate) return basePrice;
-    const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-    return basePrice * diffDays * roomsCount;
+    if (!checkInDate || !checkOutDate) return basePrice * roomsCount;
+
+    let totalPrice = 0;
+    const curr = new Date(checkInDate);
+    curr.setHours(0, 0, 0, 0);
+
+    const end = new Date(checkOutDate);
+    end.setHours(0, 0, 0, 0);
+
+    while (curr < end) {
+      totalPrice += getPriceForDate(curr);
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    return totalPrice * roomsCount;
   };
 
   const currentYear = calendarDate.getFullYear();
@@ -365,17 +557,11 @@ export default function ReservationsClient({ content = [], editMode = false }: {
           <div>
             <label htmlFor={`${idPrefix}guestsCount`} className="text-[10px] font-mono uppercase tracking-wider text-earth/80 block mb-1">Travelers</label>
             <select id={`${idPrefix}guestsCount`} value={guestsCount} onChange={(e) => setGuestsCount(parseInt(e.target.value))} className="w-full bg-white rounded-lg border border-earth/15 px-3 py-3 text-sm focus:outline-none focus:border-phewa text-earth shadow-sm">
-              {selectedRoomDetails?.pricingConfig && selectedRoomDetails.pricingConfig.length > 0 ? (
-                selectedRoomDetails.pricingConfig.map((tier: any, idx: number) => (
-                  <option key={`tier-${idx}`} value={tier.guests}>{tier.label} - {tier.price}</option>
-                ))
-              ) : (
-                <>
-                  <option value={1}>1 Adult</option>
-                  <option value={2}>2 Adults</option>
-                  <option value={3}>3 Adults / Family</option>
-                </>
-              )}
+              {travellerTierOptions.map((tier: any, idx: number) => (
+                <option key={`tier-${idx}`} value={tier.guests}>
+                  {tier.label} - {tier.effectivePrice}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -412,8 +598,27 @@ export default function ReservationsClient({ content = [], editMode = false }: {
                   </div>
                 </div>
               </div>
+            ) : !isMinStaySatisfied ? (
+              <div className="p-5 rounded-xl bg-amber-50 border border-amber-200 flex gap-3 text-amber-900">
+                <AlertCircle className="w-6 h-6 flex-shrink-0 text-amber-500" />
+                <div>
+                  <h4 className="font-bold text-sm">Minimum Stay Requirement</h4>
+                  <p className="text-xs opacity-90 mt-1">
+                    Dates selected fall into <strong>{activeRuleName || 'a special rate period'}</strong> which requires a minimum stay of <strong>{requiredMinStay} nights</strong>. (You selected {stayNights} night{stayNights === 1 ? '' : 's'}).
+                  </p>
+                  <p className="text-xs font-semibold text-nanohana mt-2">Please select longer check-out dates on the calendar.</p>
+                </div>
+              </div>
             ) : (
               <div className="p-5 rounded-xl bg-forest/5 border border-forest/20 space-y-4">
+                {activeSeasonalFare && (
+                  <div className="flex items-center gap-2 text-xs bg-nanohana/20 text-earth border border-nanohana/30 rounded-lg p-2.5 font-medium">
+                    <Sparkles className="w-4 h-4 text-nanohana flex-shrink-0" />
+                    <span>
+                      <strong>Seasonal Rate Applied:</strong> {activeSeasonalFare.name} ({activeSeasonalFare.startDate} → {activeSeasonalFare.endDate})
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-3 border-b border-earth/10 pb-3">
                   <CheckCircle2 className="w-6 h-6 text-forest flex-shrink-0" />
                   <div>
@@ -421,6 +626,28 @@ export default function ReservationsClient({ content = [], editMode = false }: {
                     <p className="text-xs text-earth/70">Your requested {roomsCount} room(s) are available.</p>
                   </div>
                 </div>
+
+                {breakdownSegments.length > 0 && (
+                  <div className="bg-white/80 border border-earth/10 rounded-xl p-3.5 space-y-2 text-xs text-earth">
+                    <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-earth/50 font-bold border-b border-earth/10 pb-1.5">
+                      <span>Rate Breakdown</span>
+                      <span>Nightly Rate × Duration</span>
+                    </div>
+                    <div className="space-y-1.5 pt-0.5">
+                      {breakdownSegments.map((seg, idx) => (
+                        <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${seg.type === 'seasonal' ? 'bg-nanohana' : 'bg-earth/30'}`}></span>
+                            <span className="font-mono text-[11px] text-earth/90 font-semibold">{seg.startDateStr} → {seg.endDateStr}</span>
+                            <span className="text-earth/60 font-sans text-[11px]">({seg.nights} night{seg.nights > 1 ? 's' : ''} × ${seg.nightlyPrice} — {seg.ruleName})</span>
+                          </div>
+                          <span className="font-bold text-earth ml-3 sm:ml-0">${seg.segmentTotal}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className={`${!isMobile ? 'flex justify-between items-center' : 'flex justify-between items-center bg-white p-3 rounded-lg border border-earth/5'}`}>
                   <div>
                     <span className="text-[10px] text-earth/50 uppercase tracking-widest font-mono block">Total Rate</span>
