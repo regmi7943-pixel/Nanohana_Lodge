@@ -138,15 +138,16 @@ export default function ReservationsClient({ content = [], editMode = false }: {
         }
       }
       
-      // Also count Pending and Confirmed requests
+      // Also count Pending requests (Confirmed ones are already in bookings_data)
       const reqStartTimes = bookingRequestsList.map((r: any) => new Date(r.checkIn + 'T00:00:00').getTime());
       const reqEndTimes = bookingRequestsList.map((r: any) => new Date(r.checkOut + 'T00:00:00').getTime());
       const dTime = curr.getTime();
 
       let requestedRoomsCount = 0;
       bookingRequestsList.forEach((req, index) => {
-        if (req.status !== 'Rejected' && req.roomType === (rooms.find((r: any) => r.id === selectedCatId)?.name)) {
+        if (req.status === 'Pending' && req.roomType === (rooms.find((r: any) => r.id === selectedCatId)?.name)) {
           // Check if current date is between checkIn (inclusive) and checkOut (exclusive)
+          // Only count Pending requests — Confirmed ones are already in bookings_data
           if (dTime >= reqStartTimes[index] && dTime < reqEndTimes[index]) {
             requestedRoomsCount += (req.roomsCount || 1);
           }
@@ -186,11 +187,12 @@ export default function ReservationsClient({ content = [], editMode = false }: {
       }
     }
     
-    // Also subtract requests
+    // Also subtract Pending requests (Confirmed ones are already in bookings_data)
     let requestedRoomsCount = 0;
     const dTime = date.getTime();
     bookingRequestsList.forEach((req) => {
-      if (req.status !== 'Rejected' && req.roomType === (rooms.find((r: any) => r.id === catId)?.name)) {
+      if (req.status === 'Pending' && req.roomType === (rooms.find((r: any) => r.id === catId)?.name)) {
+        // Only count Pending requests — Confirmed ones are already in bookings_data
         const start = new Date(req.checkIn + 'T00:00:00').getTime();
         const end = new Date(req.checkOut + 'T00:00:00').getTime();
         if (dTime >= start && dTime < end) {

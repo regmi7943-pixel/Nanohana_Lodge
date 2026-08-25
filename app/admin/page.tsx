@@ -54,7 +54,8 @@ export default function AdminDashboard() {
         // Add requested rooms
         const dTime = d.getTime();
         requestsList.forEach((req) => {
-          if (req.status !== 'Rejected') {
+          if (req.status === 'Pending') {
+            // Only count Pending requests — Confirmed ones are now auto-blocked in bookings_data
             const start = new Date(req.checkIn + 'T00:00:00').getTime();
             const end = new Date(req.checkOut + 'T00:00:00').getTime();
             if (dTime >= start && dTime < end) {
