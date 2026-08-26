@@ -97,7 +97,7 @@ function wrapLayout(title: string, bodyContent: string) {
           </div>
           <div style="${footerStyles}">
             <p style="margin: 0 0 5px 0;"><strong>Nanohana Lodge</strong> | Street No. 4, Lakeside, Pokhara, Nepal</p>
-            <p style="margin: 0;">Phone: +977-61-464070 | Email: nanohana_lodge@hotmail.com</p>
+            <p style="margin: 0;">Phone: +977-61-454478 | Mobile: +977-9846398177 | Email: nanohana_lodge@hotmail.com</p>
           </div>
         </div>
       </body>
